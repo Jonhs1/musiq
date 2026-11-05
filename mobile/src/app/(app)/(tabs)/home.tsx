@@ -1,13 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Button, Screen } from '../../components/ui';
-import { supabase } from '../../lib/supabase';
-import { colors, radius, spacing } from '../../lib/theme';
-import { INSTRUMENT_EMOJI, useMyInstruments, useProfile } from '../../features/profile/api';
-import { useAuth } from '../../lib/auth';
-import { formatDuration } from '../../lib/format';
-import { syncPendingSessions, usePendingCount } from '../../lib/pendingSessions';
+import { Screen } from '../../../components/ui';
+import { colors, radius, spacing } from '../../../lib/theme';
+import { INSTRUMENT_EMOJI, useMyInstruments, useProfile } from '../../../features/profile/api';
+import { useAuth } from '../../../lib/auth';
+import { formatDuration } from '../../../lib/format';
+import { syncPendingSessions, usePendingCount } from '../../../lib/pendingSessions';
 
 export default function Home() {
   const router = useRouter();
@@ -20,13 +19,11 @@ export default function Home() {
   const totalMinutes = Math.floor((profile?.total_practice_seconds ?? 0) / 60);
 
   async function retryNow() {
-    if (!session) {
-      Alert.alert('Envio', 'Você não está logado.');
-      return;
-    }
+    if (!session) return;
     const result = await syncPendingSessions(session.user.id);
     if (result.synced > 0) {
       queryClient.invalidateQueries({ queryKey: ['profile', session.user.id] });
+      queryClient.invalidateQueries({ queryKey: ['unlocked', session.user.id] });
     }
     Alert.alert(
       'Envio',
@@ -67,10 +64,6 @@ export default function Home() {
             {item.is_primary ? <Text style={styles.primaryTag}>principal</Text> : null}
           </Pressable>
         ))}
-      </View>
-
-      <View style={{ marginTop: spacing.xl }}>
-        <Button title="Sair" variant="ghost" onPress={() => supabase.auth.signOut()} />
       </View>
     </Screen>
   );
