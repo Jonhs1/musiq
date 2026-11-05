@@ -1,10 +1,29 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { Text } from 'react-native';
-import { colors } from '../../../lib/theme';
+import { View } from 'react-native';
+import { colors, fonts } from '../../../lib/theme';
 
-function icon(emoji: string) {
+type IconName = React.ComponentProps<typeof Ionicons>['name'];
+
+// Ícone com "pílula" roxa atrás quando a aba está ativa
+function tabIcon(active: IconName, inactive: IconName) {
   return ({ focused }: { focused: boolean }) => (
-    <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.45 }}>{emoji}</Text>
+    <View
+      style={{
+        width: 52,
+        height: 30,
+        borderRadius: 15,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: focused ? colors.primaryTint : 'transparent',
+      }}
+    >
+      <Ionicons
+        name={focused ? active : inactive}
+        size={22}
+        color={focused ? colors.primarySoft : colors.textDim}
+      />
+    </View>
   );
 }
 
@@ -13,19 +32,23 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
-        tabBarLabelStyle: { fontSize: 10 },
+        tabBarActiveTintColor: colors.primarySoft,
+        tabBarInactiveTintColor: colors.textDim,
+        tabBarStyle: {
+          backgroundColor: colors.backgroundDeep,
+          borderTopColor: colors.border,
+          borderTopWidth: 1,
+          paddingTop: 6,
+        },
+        tabBarLabelStyle: { fontSize: 11, fontFamily: fonts.bodyMedium },
         sceneStyle: { backgroundColor: colors.background },
       }}
     >
-      <Tabs.Screen name="home" options={{ title: 'Início', tabBarIcon: icon('🏠') }} />
-      <Tabs.Screen name="plan" options={{ title: 'Plano', tabBarIcon: icon('📅') }} />
-      <Tabs.Screen name="challenges" options={{ title: 'Desafios', tabBarIcon: icon('🎯') }} />
-      <Tabs.Screen name="achievements" options={{ title: 'Conquistas', tabBarIcon: icon('🏅') }} />
-      <Tabs.Screen name="ranking" options={{ title: 'Ranking', tabBarIcon: icon('🏆') }} />
-      <Tabs.Screen name="profile" options={{ title: 'Perfil', tabBarIcon: icon('👤') }} />
+      <Tabs.Screen name="home" options={{ title: 'Início', tabBarIcon: tabIcon('home', 'home-outline') }} />
+      <Tabs.Screen name="plan" options={{ title: 'Plano', tabBarIcon: tabIcon('calendar', 'calendar-outline') }} />
+      <Tabs.Screen name="challenges" options={{ title: 'Desafios', tabBarIcon: tabIcon('flag', 'flag-outline') }} />
+      <Tabs.Screen name="ranking" options={{ title: 'Ranking', tabBarIcon: tabIcon('trophy', 'trophy-outline') }} />
+      <Tabs.Screen name="profile" options={{ title: 'Perfil', tabBarIcon: tabIcon('person', 'person-outline') }} />
     </Tabs>
   );
 }

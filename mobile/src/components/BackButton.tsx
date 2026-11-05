@@ -1,17 +1,12 @@
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text } from 'react-native';
-import { colors } from '../lib/theme';
+import { IconButton } from './ui';
+import { View } from 'react-native';
 
-export function BackButton({ label = 'Voltar' }: { label?: string }) {
+export function BackButton() {
   const router = useRouter();
   return (
-    <Pressable onPress={() => router.back()} hitSlop={12} style={styles.button}>
-      <Text style={styles.text}>‹ {label}</Text>
-    </Pressable>
+    <View style={{ alignSelf: 'flex-start' }}>
+      <IconButton name="chevron-back" onPress={() => router.back()} />
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  button: { alignSelf: 'flex-start' },
-  text: { color: colors.primary, fontSize: 16 },
-});

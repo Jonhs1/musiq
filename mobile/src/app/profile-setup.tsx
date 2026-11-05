@@ -3,11 +3,12 @@ import { decode } from 'base64-arraybuffer';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Button, ErrorText, Screen, TextField } from '../components/ui';
+import { Icon, InstrumentTile } from '../components/Icon';
+import { Button, ErrorText, Screen, SectionLabel, TextField, Title } from '../components/ui';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
-import { colors, radius, spacing } from '../lib/theme';
-import { INSTRUMENT_EMOJI, useInstruments, useProfile } from '../features/profile/api';
+import { colors, fonts, radius, spacing } from '../lib/theme';
+import { useInstruments, useProfile } from '../features/profile/api';
 
 type Avatar = { uri: string; base64: string; mimeType: string };
 
@@ -111,13 +112,14 @@ export default function ProfileSetup() {
 
   return (
     <Screen>
-      <Text style={styles.title}>Seu perfil</Text>
+      <Title>Seu perfil</Title>
 
       <Pressable onPress={pickImage} style={styles.avatarWrap}>
         {avatar ? (
           <Image source={{ uri: avatar.uri }} style={styles.avatar} />
         ) : (
           <View style={[styles.avatar, styles.avatarEmpty]}>
+            <Icon name="camera" size={24} color={colors.textMuted} />
             <Text style={styles.avatarHint}>Adicionar foto</Text>
           </View>
         )}
@@ -132,7 +134,7 @@ export default function ProfileSetup() {
         maxLength={20}
       />
 
-      <Text style={styles.section}>Quais instrumentos você toca?</Text>
+      <SectionLabel>Quais instrumentos você toca?</SectionLabel>
       <Text style={styles.hint}>O primeiro que você escolher será o principal.</Text>
       <View style={styles.grid}>
         {instruments?.map((instrument) => {
@@ -144,7 +146,7 @@ export default function ProfileSetup() {
               onPress={() => toggleInstrument(instrument.id)}
               style={[styles.card, isSelected && styles.cardSelected]}
             >
-              <Text style={styles.emoji}>{INSTRUMENT_EMOJI[instrument.id] ?? '🎵'}</Text>
+              <InstrumentTile id={instrument.id} size={52} />
               <Text style={styles.cardText}>{instrument.name}</Text>
               {isSelected && index === 0 ? <Text style={styles.primaryTag}>principal</Text> : null}
             </Pressable>
@@ -159,32 +161,30 @@ export default function ProfileSetup() {
 }
 
 const styles = StyleSheet.create({
-  title: { color: colors.text, fontSize: 28, fontWeight: '700', marginTop: spacing.md },
   avatarWrap: { alignSelf: 'center', marginVertical: spacing.sm },
-  avatar: { width: 112, height: 112, borderRadius: 56 },
+  avatar: { width: 112, height: 112, borderRadius: 56, borderWidth: 2, borderColor: colors.primary },
   avatarEmpty: {
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
+    borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 4,
   },
-  avatarHint: { color: colors.textMuted, fontSize: 13 },
-  section: { color: colors.text, fontSize: 18, fontWeight: '600', marginTop: spacing.md },
-  hint: { color: colors.textMuted, fontSize: 13 },
+  avatarHint: { color: colors.textMuted, fontSize: 12, fontFamily: fonts.bodyMedium },
+  hint: { color: colors.textMuted, fontSize: 13, fontFamily: fonts.body },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   card: {
     width: '48%',
     padding: spacing.md,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: spacing.sm,
   },
-  cardSelected: { borderColor: colors.primary },
-  emoji: { fontSize: 32 },
-  cardText: { color: colors.text, fontSize: 15, fontWeight: '600' },
-  primaryTag: { color: colors.primary, fontSize: 11 },
+  cardSelected: { borderColor: colors.primary, backgroundColor: colors.primaryTint },
+  cardText: { color: colors.text, fontSize: 15, fontFamily: fonts.bodySemi },
+  primaryTag: { color: colors.primarySoft, fontSize: 11, fontFamily: fonts.bodySemi },
 });

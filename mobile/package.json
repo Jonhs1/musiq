@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
+    "@expo-google-fonts/chakra-petch": "^0.4.1",
+    "@expo-google-fonts/inter": "^0.4.2",
     "@expo/ui": "~58.0.27",
+    "@expo/vector-icons": "^15.1.1",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/netinfo": "12.0.1",
     "@supabase/supabase-js": "^2.119.0",
@@ -20,6 +23,7 @@
     "expo-image": "~58.0.18",
     "expo-image-picker": "~58.0.10",
     "expo-keep-awake": "~58.0.3",
+    "expo-linear-gradient": "~58.0.3",
     "expo-linking": "~58.0.16",
     "expo-router": "~58.0.30",
     "expo-splash-screen": "~58.0.13",

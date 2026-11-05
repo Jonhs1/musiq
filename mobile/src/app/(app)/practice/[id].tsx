@@ -4,13 +4,14 @@ import { useKeepAwake } from 'expo-keep-awake';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, View } from 'react-native';
-import { Button, ErrorText, Screen } from '../../../components/ui';
+import { Celebration } from '../../../components/Celebration';
+import { Button, ErrorText, IconButton, Screen } from '../../../components/ui';
 import { useExercise } from '../../../features/exercises/api';
 import { MetronomePanel, MetronomePanelHandle } from '../../../features/metronome/MetronomePanel';
 import { useAuth } from '../../../lib/auth';
 import { formatDuration } from '../../../lib/format';
 import { enqueueSession, syncPendingSessions } from '../../../lib/pendingSessions';
-import { colors, radius, spacing } from '../../../lib/theme';
+import { colors, fonts, radius, spacing } from '../../../lib/theme';
 
 const MIN_BPM = 20;
 const MAX_BPM = 400;
@@ -41,6 +42,7 @@ export default function Practice() {
     const [notes, setNotes] = useState('');
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [result, setResult] = useState<{ seconds: number; xp: number | null } | null>(null);
 
     // Define o BPM inicial quando o exercício carrega
     useEffect(() => {
@@ -144,14 +146,7 @@ export default function Practice() {
             queryClient.invalidateQueries({ queryKey: ['plan'] });
 
             const xp = xpById[sessionId];
-            const sent = xp !== undefined;
-            Alert.alert(
-                sent ? 'Sessão salva!' : 'Sessão guardada!',
-                sent
-                    ? `${formatDuration(seconds)} praticados · +${xp} XP`
-                    : `${formatDuration(seconds)} praticados. Sem conexão agora: a sessão será enviada automaticamente quando você estiver online.`,
-                [{ text: 'OK', onPress: () => router.dismissAll() }],
-            );
+            setResult({ seconds, xp: xp !== undefined ? xp : null });
         } catch (e) {
             console.warn('finish error:', e);
             setError(`Não foi possível guardar a sessão: ${e instanceof Error ? e.message : String(e)}`);
@@ -163,7 +158,7 @@ export default function Practice() {
     if (!exercise || initialBpm === null) {
         return (
             <Screen>
-                <ActivityIndicator color={colors.primary} />
+                <ActivityIndicator color={colors.primarySoft} />
             </Screen>
         );
     }
@@ -171,13 +166,23 @@ export default function Practice() {
     return (
         <Screen>
             <Stack.Screen options={{ gestureEnabled: false }} />
+
+            <View style={styles.topRow}>
+                <IconButton name="close" onPress={cancel} disabled={saving} />
+                <Text style={styles.topLabel}>Prática</Text>
+                <View style={{ width: 44 }} />
+            </View>
+
             <Text style={styles.exerciseTitle}>{exercise.title}</Text>
 
             <View style={styles.timerBox}>
                 <Text style={styles.timer}>{formatDuration(Math.floor(elapsedMs / 1000))}</Text>
-                <Text style={styles.timerHint}>
-                    {running ? 'Praticando…' : 'Pausado'} · XP a cada 10 minutos completos
-                </Text>
+                <View style={[styles.status, !running && styles.statusPaused]}>
+                    <View style={[styles.statusDot, !running && { backgroundColor: colors.textDim }]} />
+                    <Text style={[styles.statusText, !running && { color: colors.textMuted }]}>
+                        {running ? 'Praticando' : 'Pausado'} · XP a cada 10 min completos
+                    </Text>
+                </View>
             </View>
 
             <MetronomePanel
@@ -191,7 +196,8 @@ export default function Practice() {
                 value={notes}
                 onChangeText={setNotes}
                 placeholder="Anotações da sessão (opcional)"
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={colors.textDim}
+                selectionColor={colors.primarySoft}
                 multiline
                 style={styles.notes}
             />
@@ -199,24 +205,69 @@ export default function Practice() {
             <ErrorText>{error}</ErrorText>
 
             <View style={{ gap: spacing.sm }}>
-                <Button title="Finalizar e salvar" onPress={finish} loading={saving} />
+                <Button title="Finalizar e salvar" icon="checkmark" onPress={finish} loading={saving} />
                 <Button
                     title={running ? 'Pausar' : 'Retomar'}
+                    icon={running ? 'pause' : 'play'}
                     variant="ghost"
                     onPress={running ? pause : resume}
                     disabled={saving}
                 />
-                <Button title="Descartar" variant="ghost" onPress={cancel} disabled={saving} />
             </View>
+
+            <Celebration
+                visible={result !== null}
+                title={result?.xp != null ? 'Sessão salva!' : 'Sessão guardada!'}
+                message={
+                    result
+                        ? result.xp != null
+                            ? `${formatDuration(result.seconds)} praticados. Continue assim!`
+                            : `${formatDuration(result.seconds)} praticados. Sem conexão agora: a sessão será enviada automaticamente quando você estiver online.`
+                        : ''
+                }
+                xp={result?.xp ?? null}
+                onClose={() => {
+                    setResult(null);
+                    router.dismissAll();
+                }}
+            />
         </Screen>
     );
 }
 
 const styles = StyleSheet.create({
-    exerciseTitle: { color: colors.text, fontSize: 20, fontWeight: '700', marginTop: spacing.md },
-    timerBox: { alignItems: 'center', paddingVertical: spacing.lg, gap: spacing.xs },
-    timer: { color: colors.primary, fontSize: 64, fontWeight: '800', fontVariant: ['tabular-nums'] },
-    timerHint: { color: colors.textMuted, fontSize: 13 },
+    topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    topLabel: { color: colors.textMuted, fontSize: 13, fontFamily: fonts.bodyMedium },
+    exerciseTitle: {
+        color: colors.text,
+        fontSize: 22,
+        lineHeight: 28,
+        fontFamily: fonts.title,
+        textAlign: 'center',
+        paddingHorizontal: spacing.sm,
+    },
+    timerBox: { alignItems: 'center', paddingVertical: spacing.md, gap: spacing.sm },
+    timer: {
+        color: colors.text,
+        fontSize: 76,
+        lineHeight: 84,
+        fontFamily: fonts.titleBold,
+        fontVariant: ['tabular-nums'],
+    },
+    status: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        paddingVertical: 7,
+        paddingHorizontal: 14,
+        borderRadius: radius.pill,
+        backgroundColor: 'rgba(61,220,151,0.10)',
+        borderWidth: 1,
+        borderColor: 'rgba(61,220,151,0.28)',
+    },
+    statusPaused: { backgroundColor: colors.surface, borderColor: colors.border },
+    statusDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.green },
+    statusText: { color: '#8BE9BE', fontSize: 12, fontFamily: fonts.bodyMedium },
     notes: {
         minHeight: 90,
         padding: spacing.md,
@@ -226,6 +277,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.surface,
         color: colors.text,
         fontSize: 15,
+        fontFamily: fonts.body,
         textAlignVertical: 'top',
     },
 });

@@ -2,9 +2,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { Screen } from '../../../components/ui';
+import { Icon, IconName } from '../../../components/Icon';
+import { TileBox } from '../../../components/Icon';
+import { Card, ErrorText, ProgressBar, Reveal, Screen, Subtitle, Title } from '../../../components/ui';
 import { Challenge, useChallenges } from '../../../features/challenges/api';
-import { colors, radius, spacing } from '../../../lib/theme';
+import { colors, fonts, spacing } from '../../../lib/theme';
 
 export default function Challenges() {
   const queryClient = useQueryClient();
@@ -23,70 +25,95 @@ export default function Challenges() {
 
   return (
     <Screen>
-      <Text style={styles.title}>Desafios</Text>
-      <Text style={styles.subtitle}>Pratique com constância e ganhe XP extra.</Text>
+      <Reveal index={0}>
+        <Title>Desafios</Title>
+        <Subtitle>Pratique com constância e ganhe XP extra.</Subtitle>
+      </Reveal>
 
-      {isLoading ? <ActivityIndicator color={colors.primary} /> : null}
-      {isError ? <Text style={styles.error}>Não foi possível carregar os desafios.</Text> : null}
+      {isLoading ? <ActivityIndicator color={colors.primarySoft} /> : null}
+      {isError ? <ErrorText>Não foi possível carregar os desafios.</ErrorText> : null}
 
-      {daily ? <ChallengeCard challenge={daily} label="Diário" hint="Termina hoje" /> : null}
-      {weekly ? <ChallengeCard challenge={weekly} label="Semanal" hint="Termina no domingo" /> : null}
+      {daily ? (
+        <Reveal index={1}>
+          <ChallengeCard challenge={daily} label="Diário" hint="Termina hoje" icon="sunny" />
+        </Reveal>
+      ) : null}
+      {weekly ? (
+        <Reveal index={2}>
+          <ChallengeCard challenge={weekly} label="Semanal" hint="Termina no domingo" icon="calendar" />
+        </Reveal>
+      ) : null}
     </Screen>
   );
 }
 
-function ChallengeCard({ challenge, label, hint }: { challenge: Challenge; label: string; hint: string }) {
+function ChallengeCard({
+  challenge,
+  label,
+  hint,
+  icon,
+}: {
+  challenge: Challenge;
+  label: string;
+  hint: string;
+  icon: IconName;
+}) {
   const done = challenge.completed_at !== null;
-  const percent = Math.min(100, Math.round((challenge.progress / challenge.target) * 100));
+  const ratio = Math.min(1, challenge.progress / challenge.target);
 
   return (
-    <View style={[styles.card, done && styles.cardDone]}>
+    <Card highlight={!done} style={done && styles.cardDone}>
       <View style={styles.cardHeader}>
-        <Text style={styles.badge}>{label}</Text>
-        <Text style={styles.hint}>{done ? 'Concluído ✓' : hint}</Text>
+        <TileBox size={44}>
+          <Icon name={done ? 'checkmark' : icon} size={22} color={done ? colors.green : colors.primarySoft} />
+        </TileBox>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.badge}>{label}</Text>
+          <Text style={styles.hint}>{done ? 'Concluído' : hint}</Text>
+        </View>
+        <View style={[styles.reward, done && styles.rewardDone]}>
+          <Icon name="flash" size={14} color={done ? colors.green : colors.gold} />
+          <Text style={[styles.rewardText, done && { color: colors.green }]}>
+            {done ? `+${challenge.xp_reward} recebidos` : `+${challenge.xp_reward} XP`}
+          </Text>
+        </View>
       </View>
 
       <Text style={styles.cardTitle}>{challenge.title}</Text>
       <Text style={styles.cardDescription}>{challenge.description}</Text>
 
-      <View style={styles.track}>
-        <View style={[styles.fill, { width: `${percent}%` }, done && styles.fillDone]} />
-      </View>
+      <ProgressBar ratio={ratio} color={done ? colors.green : colors.primary} height={10} />
 
-      <View style={styles.cardFooter}>
-        <Text style={styles.progress}>
-          {challenge.progress}/{challenge.target}
-        </Text>
-        <Text style={[styles.reward, done && { color: colors.textMuted }]}>
-          {done ? `+${challenge.xp_reward} XP recebidos` : `+${challenge.xp_reward} XP`}
-        </Text>
-      </View>
-    </View>
+      <Text style={styles.progress}>
+        {challenge.progress}/{challenge.target}
+      </Text>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  title: { color: colors.text, fontSize: 28, fontWeight: '700', marginTop: spacing.md },
-  subtitle: { color: colors.textMuted, fontSize: 14 },
-  error: { color: colors.danger },
-  card: {
-    padding: spacing.md,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: spacing.sm,
+  cardDone: { borderColor: 'rgba(61,220,151,0.35)' },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  badge: {
+    color: colors.primarySoft,
+    fontSize: 12,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+    fontFamily: fonts.title,
   },
-  cardDone: { borderColor: colors.primary },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  badge: { color: colors.primary, fontSize: 12, fontWeight: '800', textTransform: 'uppercase' },
-  hint: { color: colors.textMuted, fontSize: 12 },
-  cardTitle: { color: colors.text, fontSize: 18, fontWeight: '700' },
-  cardDescription: { color: colors.textMuted, fontSize: 14 },
-  track: { height: 8, borderRadius: 4, backgroundColor: colors.border, overflow: 'hidden' },
-  fill: { height: 8, borderRadius: 4, backgroundColor: colors.primary },
-  fillDone: { backgroundColor: colors.primary },
-  cardFooter: { flexDirection: 'row', justifyContent: 'space-between' },
-  progress: { color: colors.text, fontSize: 14, fontWeight: '700' },
-  reward: { color: colors.primary, fontSize: 14, fontWeight: '700' },
+  hint: { color: colors.textMuted, fontSize: 12, fontFamily: fonts.body },
+  reward: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    backgroundColor: 'rgba(242,184,75,0.12)',
+  },
+  rewardDone: { backgroundColor: 'rgba(61,220,151,0.12)' },
+  rewardText: { color: colors.gold, fontSize: 12, fontFamily: fonts.bodySemi },
+  cardTitle: { color: colors.text, fontSize: 20, lineHeight: 26, fontFamily: fonts.title, marginTop: spacing.xs },
+  cardDescription: { color: colors.textMuted, fontSize: 14, lineHeight: 20, fontFamily: fonts.body },
+  progress: { color: colors.text, fontSize: 14, fontFamily: fonts.titleBold },
 });

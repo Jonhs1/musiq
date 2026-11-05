@@ -3,6 +3,12 @@ import { colors } from '../../lib/theme';
 
 export default function AuthLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }} />
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: 'fade',
+        contentStyle: { backgroundColor: colors.background },
+      }}
+    />
   );
 }

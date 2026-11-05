@@ -1,9 +1,10 @@
 import { Link } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
-import { Button, ErrorText, Screen, TextField } from '../../components/ui';
+import { Brand } from '../../components/Brand';
+import { Button, ErrorText, Reveal, Screen, TextField } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
-import { colors, spacing } from '../../lib/theme';
+import { colors, fonts, spacing } from '../../lib/theme';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -26,8 +27,10 @@ export default function Login() {
 
   return (
     <Screen>
-      <Text style={styles.logo}>MUSIQ</Text>
-      <Text style={styles.subtitle}>Entre para continuar sua evolução.</Text>
+      <Reveal index={0} style={{ alignItems: 'center', marginTop: spacing.md }}>
+        <Brand />
+        <Text style={styles.subtitle}>Entre para continuar sua evolução.</Text>
+      </Reveal>
       <TextField
         label="E-mail"
         value={email}
@@ -53,13 +56,6 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
-  logo: {
-    color: colors.primary,
-    fontSize: 40,
-    fontWeight: '800',
-    letterSpacing: 4,
-    marginTop: spacing.xl,
-  },
-  subtitle: { color: colors.textMuted, fontSize: 16, marginBottom: spacing.md },
-  link: { color: colors.primary, textAlign: 'center', marginTop: spacing.md, fontSize: 15 },
+  subtitle: { color: colors.textMuted, fontSize: 15, fontFamily: fonts.body, marginTop: spacing.xs, marginBottom: spacing.sm },
+  link: { color: colors.primarySoft, textAlign: 'center', marginTop: spacing.md, fontSize: 15, fontFamily: fonts.bodyMedium },
 });

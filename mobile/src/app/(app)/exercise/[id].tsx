@@ -1,10 +1,12 @@
+import { ReactNode } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { BackButton } from '../../../components/BackButton';
-import { Button, Screen } from '../../../components/ui';
+import { Dots } from '../../../components/Dots';
+import { Button, Card, Reveal, Screen, SectionLabel, Title } from '../../../components/ui';
 import { useExercise } from '../../../features/exercises/api';
-import { DIFFICULTY_LABELS, difficultyDots } from '../../../lib/format';
-import { colors, radius, spacing } from '../../../lib/theme';
+import { DIFFICULTY_LABELS } from '../../../lib/format';
+import { colors, fonts, spacing } from '../../../lib/theme';
 
 export default function ExerciseDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -15,7 +17,7 @@ export default function ExerciseDetail() {
     return (
       <Screen>
         <BackButton />
-        <ActivityIndicator color={colors.primary} />
+        <ActivityIndicator color={colors.primarySoft} />
       </Screen>
     );
   }
@@ -23,64 +25,69 @@ export default function ExerciseDetail() {
   return (
     <Screen>
       <BackButton />
-      <Text style={styles.title}>{exercise.title}</Text>
+      <Reveal index={0}>
+        <Title>{exercise.title}</Title>
+      </Reveal>
 
-      <View style={styles.stats}>
-        <Stat label="Dificuldade" value={DIFFICULTY_LABELS[exercise.difficulty]} extra={difficultyDots(exercise.difficulty)} />
+      <Reveal index={1} style={styles.stats}>
+        <Stat label="Dificuldade" value={DIFFICULTY_LABELS[exercise.difficulty]}>
+          <Dots level={exercise.difficulty} />
+        </Stat>
         <Stat label="BPM sugerido" value={exercise.recommended_bpm ? String(exercise.recommended_bpm) : '—'} />
         <Stat label="Duração" value={exercise.duration_minutes ? `${exercise.duration_minutes} min` : '—'} />
-      </View>
+      </Reveal>
 
       {exercise.objective ? (
-        <View style={styles.block}>
-          <Text style={styles.blockTitle}>Objetivo</Text>
-          <Text style={styles.blockText}>{exercise.objective}</Text>
-        </View>
+        <Reveal index={2}>
+          <Card>
+            <SectionLabel>Objetivo</SectionLabel>
+            <Text style={styles.blockText}>{exercise.objective}</Text>
+          </Card>
+        </Reveal>
       ) : null}
 
       {exercise.description ? (
-        <View style={styles.block}>
-          <Text style={styles.blockTitle}>Como praticar</Text>
-          <Text style={styles.blockText}>{exercise.description}</Text>
-        </View>
-      )  : null}
+        <Reveal index={3}>
+          <Card>
+            <SectionLabel>Como praticar</SectionLabel>
+            <Text style={styles.blockText}>{exercise.description}</Text>
+          </Card>
+        </Reveal>
+      ) : null}
 
-      <View style={{ marginTop: spacing.md }}>
+      <Reveal index={4} style={{ marginTop: spacing.sm }}>
         <Button
           title="Iniciar prática"
+          icon="play"
           onPress={() => router.push({ pathname: '/practice/[id]', params: { id: exercise.id } })}
         />
-      </View>
+      </Reveal>
     </Screen>
   );
 }
 
-function Stat({ label, value, extra }: { label: string; value: string; extra?: string }) {
+function Stat({ label, value, children }: { label: string; value: string; children?: ReactNode }) {
   return (
     <View style={styles.stat}>
       <Text style={styles.statLabel}>{label}</Text>
       <Text style={styles.statValue}>{value}</Text>
-      {extra ? <Text style={styles.statExtra}>{extra}</Text> : null}
+      {children}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  title: { color: colors.text, fontSize: 26, fontWeight: '700', marginTop: spacing.sm },
   stats: { flexDirection: 'row', gap: spacing.sm },
   stat: {
     flex: 1,
-    padding: spacing.md,
-    borderRadius: radius.md,
+    padding: 14,
+    borderRadius: 18,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    gap: 2,
+    gap: 4,
   },
-  statLabel: { color: colors.textMuted, fontSize: 12 },
-  statValue: { color: colors.text, fontSize: 16, fontWeight: '700' },
-  statExtra: { color: colors.primary, fontSize: 10, letterSpacing: 2 },
-  block: { gap: spacing.xs },
-  blockTitle: { color: colors.primary, fontSize: 13, fontWeight: '700', textTransform: 'uppercase' },
-  blockText: { color: colors.text, fontSize: 16, lineHeight: 23 },
+  statLabel: { color: colors.textMuted, fontSize: 12, fontFamily: fonts.body },
+  statValue: { color: colors.text, fontSize: 16, fontFamily: fonts.title },
+  blockText: { color: colors.text, fontSize: 15, lineHeight: 23, fontFamily: fonts.body },
 });

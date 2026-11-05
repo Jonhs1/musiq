@@ -1,19 +1,22 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../lib/theme';
+import { colors, fonts } from '../lib/theme';
 
 export function Avatar({
   uri,
   name,
   size = 40,
+  ring,
 }: {
   uri?: string | null;
   name?: string | null;
   size?: number;
+  ring?: boolean;
 }) {
   const dimension = { width: size, height: size, borderRadius: size / 2 };
-  if (uri) return <Image source={{ uri }} style={dimension} />;
+  const ringStyle = ring ? { borderWidth: 2, borderColor: colors.primary } : null;
+  if (uri) return <Image source={{ uri }} style={[dimension, ringStyle]} />;
   return (
-    <View style={[dimension, styles.fallback]}>
+    <View style={[dimension, styles.fallback, ringStyle]}>
       <Text style={[styles.letter, { fontSize: size * 0.42 }]}>
         {(name ?? '?').charAt(0).toUpperCase()}
       </Text>
@@ -23,11 +26,9 @@ export function Avatar({
 
 const styles = StyleSheet.create({
   fallback: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: colors.primaryDeep,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  letter: { color: colors.primary, fontWeight: '700' },
+  letter: { color: colors.text, fontFamily: fonts.titleBold },
 });

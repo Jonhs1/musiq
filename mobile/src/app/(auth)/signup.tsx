@@ -1,9 +1,10 @@
 import { Link } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
-import { Button, ErrorText, Screen, TextField } from '../../components/ui';
+import { Brand } from '../../components/Brand';
+import { Button, ErrorText, Reveal, Screen, TextField } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
-import { colors, spacing } from '../../lib/theme';
+import { colors, fonts, spacing } from '../../lib/theme';
 
 export default function Signup() {
   const [fullName, setFullName] = useState('');
@@ -42,7 +43,10 @@ export default function Signup() {
 
   return (
     <Screen>
-      <Text style={styles.title}>Criar conta</Text>
+      <Reveal index={0} style={{ alignItems: 'center', marginTop: spacing.md }}>
+        <Brand size={110} />
+        <Text style={styles.title}>Criar conta</Text>
+      </Reveal>
       <TextField label="Nome" value={fullName} onChangeText={setFullName} autoComplete="name" />
       <TextField
         label="E-mail"
@@ -70,7 +74,7 @@ export default function Signup() {
 }
 
 const styles = StyleSheet.create({
-  title: { color: colors.text, fontSize: 28, fontWeight: '700', marginTop: spacing.xl },
-  info: { color: colors.primary, fontSize: 14 },
-  link: { color: colors.primary, textAlign: 'center', marginTop: spacing.md, fontSize: 15 },
+  title: { color: colors.text, fontSize: 22, fontFamily: fonts.title, marginTop: spacing.sm, marginBottom: spacing.xs },
+  info: { color: colors.green, fontSize: 14, fontFamily: fonts.body },
+  link: { color: colors.primarySoft, textAlign: 'center', marginTop: spacing.md, fontSize: 15, fontFamily: fonts.bodyMedium },
 });

@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radius, spacing } from '../../lib/theme';
+import { Icon } from '../../components/Icon';
+import { colors, fonts, radius, spacing } from '../../lib/theme';
 import { BeatEvent, Metronome, MetronomeConfig, MetronomeHandle, Subdivision } from './Metronome';
 
 const SIGNATURES: Record<string, { beats: number; unit: 4 | 8 }> = {
@@ -163,7 +164,10 @@ export const MetronomePanel = forwardRef<MetronomePanelHandle, Props>(function M
         }}
       />
 
-      <Text style={styles.label}>Metrônomo</Text>
+      <View style={styles.headerRow}>
+        <Text style={styles.label}>Metrônomo</Text>
+        {!running ? null : <View style={styles.liveDot} />}
+      </View>
 
       <View style={styles.bpmRow}>
         <RoundButton label="−5" onPress={() => changeBpm(-5)} />
@@ -202,10 +206,12 @@ export const MetronomePanel = forwardRef<MetronomePanelHandle, Props>(function M
               : 'Tocando'}
       </Text>
 
-      <Pressable onPress={toggle} style={[styles.playButton, running && styles.playButtonOn]}>
-        <Text style={[styles.playText, running && { color: colors.text }]}>
-          {running ? 'Parar metrônomo' : 'Iniciar metrônomo'}
-        </Text>
+      <Pressable
+        onPress={toggle}
+        style={({ pressed }) => [styles.playButton, running && styles.playButtonOn, pressed && { opacity: 0.85 }]}
+      >
+        <Icon name={running ? 'stop' : 'play'} size={18} color={colors.text} />
+        <Text style={styles.playText}>{running ? 'Parar metrônomo' : 'Iniciar metrônomo'}</Text>
       </Pressable>
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -221,7 +227,7 @@ export const MetronomePanel = forwardRef<MetronomePanelHandle, Props>(function M
 
       <Pressable onPress={() => setAdvanced((value) => !value)} style={styles.advancedToggle}>
         <Text style={styles.advancedText}>Opções avançadas</Text>
-        <Text style={styles.advancedText}>{advanced ? '▲' : '▼'}</Text>
+        <Icon name={advanced ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textMuted} />
       </Pressable>
 
       {advanced ? (
@@ -330,7 +336,9 @@ function Toggle({ label, value, onChange }: { label: string; value: boolean; onC
   return (
     <Pressable onPress={() => onChange(!value)} style={styles.toggle}>
       <Text style={styles.toggleLabel}>{label}</Text>
-      <Text style={[styles.toggleState, value && { color: colors.primary }]}>{value ? 'Ligado' : 'Desligado'}</Text>
+      <View style={[styles.switchTrack, value && styles.switchTrackOn]}>
+        <View style={[styles.switchThumb, value && styles.switchThumbOn]} />
+      </View>
     </Pressable>
   );
 }
@@ -338,75 +346,113 @@ function Toggle({ label, value, onChange }: { label: string; value: boolean; onC
 const styles = StyleSheet.create({
   box: {
     padding: spacing.md,
-    borderRadius: radius.md,
+    borderRadius: radius.xl,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
     gap: spacing.sm,
   },
-  label: { color: colors.textMuted, fontSize: 13 },
-  bpmRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  bpmCenter: { alignItems: 'center', minWidth: 90 },
-  bpmValue: { color: colors.text, fontSize: 40, fontWeight: '800', fontVariant: ['tabular-nums'] },
-  bpmUnit: { color: colors.textMuted, fontSize: 12 },
-  dots: { flexDirection: 'row', gap: spacing.sm, justifyContent: 'center' },
-  dot: { width: 18, height: 18, borderRadius: 9, backgroundColor: colors.border },
-  dotActive: { backgroundColor: colors.primary },
-  dotCountIn: { backgroundColor: colors.gold },
-  dotSilent: { backgroundColor: colors.textMuted },
-  hint: { color: colors.textMuted, fontSize: 12, textAlign: 'center' },
-  playButton: {
-    paddingVertical: 14,
-    borderRadius: radius.md,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  label: {
+    color: colors.textMuted,
+    fontSize: 12,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+    fontFamily: fonts.title,
   },
-  playButtonOn: { backgroundColor: colors.border },
-  playText: { color: colors.background, fontSize: 16, fontWeight: '700' },
-  error: { color: colors.danger, fontSize: 13 },
-  section: { color: colors.text, fontSize: 14, fontWeight: '600', marginTop: spacing.xs },
-  round: {
-    minWidth: 44,
-    height: 44,
-    paddingHorizontal: 6,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: colors.border,
+  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.green },
+  bpmRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  bpmCenter: { alignItems: 'center', minWidth: 96 },
+  bpmValue: {
+    color: colors.primarySoft,
+    fontSize: 56,
+    lineHeight: 62,
+    fontFamily: fonts.titleBold,
+    fontVariant: ['tabular-nums'],
+  },
+  bpmUnit: { color: colors.textMuted, fontSize: 12, fontFamily: fonts.body },
+  dots: { flexDirection: 'row', gap: 14, justifyContent: 'center', alignItems: 'center', height: 30 },
+  dot: { width: 16, height: 16, borderRadius: 8, backgroundColor: colors.border },
+  dotActive: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#A878FF',
+    shadowColor: '#A878FF',
+    shadowOpacity: 0.9,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 6,
+  },
+  dotCountIn: { backgroundColor: colors.gold, shadowColor: colors.gold },
+  dotSilent: { backgroundColor: colors.textDim, shadowOpacity: 0 },
+  hint: { color: colors.textMuted, fontSize: 12, textAlign: 'center', fontFamily: fonts.body },
+  playButton: {
+    height: 54,
+    flexDirection: 'row',
+    gap: 10,
+    borderRadius: radius.pill,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  roundText: { color: colors.text, fontSize: 14, fontWeight: '700' },
+  playButtonOn: { backgroundColor: colors.border },
+  playText: { color: colors.text, fontSize: 15, fontFamily: fonts.bodySemi },
+  error: { color: colors.danger, fontSize: 13, fontFamily: fonts.body },
+  section: { color: colors.text, fontSize: 14, fontFamily: fonts.bodySemi, marginTop: spacing.xs },
+  round: {
+    minWidth: 46,
+    height: 46,
+    paddingHorizontal: 6,
+    borderRadius: 23,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  roundText: { color: colors.text, fontSize: 14, fontFamily: fonts.bodySemi },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   chip: {
-    paddingVertical: 9,
-    paddingHorizontal: 13,
-    borderRadius: radius.md,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  chipActive: { borderColor: colors.primary },
-  chipText: { color: colors.textMuted, fontSize: 14 },
-  chipTextActive: { color: colors.primary, fontWeight: '700' },
+  chipActive: { borderColor: colors.primary, backgroundColor: colors.primaryTint },
+  chipText: { color: colors.textMuted, fontSize: 13, fontFamily: fonts.bodyMedium },
+  chipTextActive: { color: colors.primarySoft, fontFamily: fonts.bodySemi },
   advancedToggle: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: spacing.sm,
     marginTop: spacing.xs,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
-  advancedText: { color: colors.textMuted, fontSize: 14, fontWeight: '600' },
+  advancedText: { color: colors.textMuted, fontSize: 14, fontFamily: fonts.bodyMedium },
   stepperRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  stepperLabel: { color: colors.textMuted, fontSize: 14 },
+  stepperLabel: { color: colors.textMuted, fontSize: 14, fontFamily: fonts.body },
   stepperControls: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  stepperValue: { color: colors.text, fontSize: 16, fontWeight: '700', minWidth: 70, textAlign: 'center' },
+  stepperValue: { color: colors.text, fontSize: 16, fontFamily: fonts.title, minWidth: 70, textAlign: 'center' },
   toggle: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: spacing.sm,
   },
-  toggleLabel: { color: colors.text, fontSize: 15 },
-  toggleState: { color: colors.textMuted, fontSize: 13, fontWeight: '700' },
-  groupHint: { color: colors.textMuted, fontSize: 12 },
+  toggleLabel: { color: colors.text, fontSize: 15, fontFamily: fonts.body },
+  switchTrack: {
+    width: 46,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: colors.border,
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  switchTrackOn: { backgroundColor: colors.primary },
+  switchThumb: { width: 20, height: 20, borderRadius: 10, backgroundColor: colors.textMuted },
+  switchThumbOn: { backgroundColor: '#fff', alignSelf: 'flex-end' },
+  groupHint: { color: colors.textMuted, fontSize: 12, fontFamily: fonts.body },
 });

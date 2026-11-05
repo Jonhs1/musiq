@@ -1,8 +1,9 @@
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { localDateKey, usePlan } from '../features/plan/api';
-import { INSTRUMENT_EMOJI } from '../features/profile/api';
-import { colors, radius, spacing } from '../lib/theme';
+import { colors, fonts, spacing } from '../lib/theme';
+import { Icon, InstrumentTile } from './Icon';
+import { Card, ProgressBar } from './ui';
 
 export function TodayPlanCard() {
   const router = useRouter();
@@ -17,12 +18,17 @@ export function TodayPlanCard() {
 
   if (todayItems.length === 0) {
     return (
-      <Pressable style={styles.card} onPress={() => router.push('/plan')}>
-        <Text style={styles.label}>Treino de hoje</Text>
-        <Text style={styles.text}>
-          {isSunday ? 'Hoje é dia de descanso 😴' : 'Nenhum treino planejado para hoje.'}
-        </Text>
-        <Text style={styles.link}>Ver plano da semana →</Text>
+      <Pressable onPress={() => router.push('/plan')}>
+        <Card>
+          <Text style={styles.label}>Treino de hoje</Text>
+          <View style={styles.restRow}>
+            <Icon name={isSunday ? 'moon' : 'calendar-outline'} size={20} color={colors.primarySoft} />
+            <Text style={styles.text}>
+              {isSunday ? 'Hoje é dia de descanso.' : 'Nenhum treino planejado para hoje.'}
+            </Text>
+          </View>
+          <Text style={styles.link}>Ver plano da semana</Text>
+        </Card>
       </Pressable>
     );
   }
@@ -32,7 +38,7 @@ export function TodayPlanCard() {
   const next = todayItems.find((item) => !item.done);
 
   return (
-    <View style={[styles.card, !next && styles.cardDone]}>
+    <Card highlight={!!next}>
       <View style={styles.header}>
         <Text style={styles.label}>Treino de hoje</Text>
         <Text style={styles.meta}>
@@ -40,47 +46,61 @@ export function TodayPlanCard() {
         </Text>
       </View>
 
+      <ProgressBar ratio={done / todayItems.length} color={next ? colors.primary : colors.green} />
+
       {next ? (
         <Pressable
-          style={({ pressed }) => [styles.next, pressed && { opacity: 0.7 }]}
+          style={({ pressed }) => [styles.next, pressed && { opacity: 0.75 }]}
           onPress={() => router.push({ pathname: '/exercise/[id]', params: { id: next.exercise_id } })}
         >
-          <Text style={styles.emoji}>{INSTRUMENT_EMOJI[next.instrument_id] ?? '🎵'}</Text>
+          <InstrumentTile id={next.instrument_id} size={48} />
           <View style={{ flex: 1 }}>
             <Text style={styles.nextLabel}>Próximo</Text>
-            <Text style={styles.nextTitle}>{next.title}</Text>
+            <Text style={styles.nextTitle} numberOfLines={2}>
+              {next.title}
+            </Text>
           </View>
-          <Text style={styles.go}>Começar</Text>
+          <View style={styles.go}>
+            <Icon name="play" size={16} color={colors.onPrimary} />
+          </View>
         </Pressable>
       ) : (
-        <Text style={styles.text}>Treino de hoje concluído ✓</Text>
+        <View style={styles.restRow}>
+          <Icon name="checkmark-circle" size={22} color={colors.green} />
+          <Text style={styles.text}>Treino de hoje concluído.</Text>
+        </View>
       )}
 
-      <Pressable onPress={() => router.push('/plan')}>
-        <Text style={styles.link}>Ver plano da semana →</Text>
+      <Pressable onPress={() => router.push('/plan')} hitSlop={8}>
+        <Text style={styles.link}>Ver plano da semana</Text>
       </Pressable>
-    </View>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    padding: spacing.md,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    gap: spacing.sm,
-  },
-  cardDone: { borderColor: colors.border },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  label: { color: colors.primary, fontSize: 12, fontWeight: '800', textTransform: 'uppercase' },
-  meta: { color: colors.textMuted, fontSize: 12 },
-  text: { color: colors.text, fontSize: 15 },
-  next: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  emoji: { fontSize: 26 },
-  nextLabel: { color: colors.textMuted, fontSize: 12 },
-  nextTitle: { color: colors.text, fontSize: 16, fontWeight: '700' },
-  go: { color: colors.primary, fontSize: 14, fontWeight: '800' },
-  link: { color: colors.textMuted, fontSize: 13 },
+  label: {
+    color: colors.primarySoft,
+    fontSize: 12,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+    fontFamily: fonts.title,
+  },
+  meta: { color: colors.textMuted, fontSize: 12, fontFamily: fonts.body },
+  text: { color: colors.text, fontSize: 15, fontFamily: fonts.body, flex: 1 },
+  restRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  next: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: 4 },
+  nextLabel: { color: colors.textMuted, fontSize: 12, fontFamily: fonts.body },
+  nextTitle: { color: colors.text, fontSize: 16, fontFamily: fonts.bodySemi },
+  go: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingLeft: 2,
+  },
+  link: { color: colors.textMuted, fontSize: 13, fontFamily: fonts.bodyMedium },
 });

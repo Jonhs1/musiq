@@ -6,16 +6,16 @@ import { useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Avatar } from '../../components/Avatar';
 import { BackButton } from '../../components/BackButton';
-import { Button, ErrorText, Screen, TextField } from '../../components/ui';
+import { InstrumentTile } from '../../components/Icon';
+import { Button, ErrorText, Screen, SectionLabel, TextField, Title } from '../../components/ui';
 import {
-  INSTRUMENT_EMOJI,
   useInstruments,
   useMyInstruments,
   useProfile,
 } from '../../features/profile/api';
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
-import { colors, radius, spacing } from '../../lib/theme';
+import { colors, fonts, radius, spacing } from '../../lib/theme';
 
 type Level = 'beginner' | 'intermediate' | 'advanced';
 type Selected = { id: string; level: Level };
@@ -196,13 +196,13 @@ export default function EditProfile() {
   return (
     <Screen>
       <BackButton />
-      <Text style={styles.title}>Editar perfil</Text>
+      <Title>Editar perfil</Title>
 
       <Pressable onPress={pickImage} style={styles.avatarWrap}>
         {avatar ? (
-          <Avatar uri={avatar.uri} name={nickname} size={112} />
+          <Avatar uri={avatar.uri} name={nickname} size={112} ring />
         ) : (
-          <Avatar uri={profile?.avatar_url} name={nickname} size={112} />
+          <Avatar uri={profile?.avatar_url} name={nickname} size={112} ring />
         )}
         <Text style={styles.avatarHint}>Alterar foto</Text>
       </Pressable>
@@ -216,7 +216,7 @@ export default function EditProfile() {
         maxLength={20}
       />
 
-      <Text style={styles.section}>Seus instrumentos</Text>
+      <SectionLabel>Seus instrumentos</SectionLabel>
       <Text style={styles.muted}>Toque para adicionar ou remover. Defina o nível e o instrumento principal.</Text>
 
       <View style={{ gap: spacing.sm }}>
@@ -226,10 +226,10 @@ export default function EditProfile() {
           return (
             <View key={instrument.id} style={[styles.card, current && styles.cardSelected]}>
               <Pressable style={styles.cardHeader} onPress={() => toggleInstrument(instrument.id, instrument.name)}>
-                <Text style={styles.emoji}>{INSTRUMENT_EMOJI[instrument.id] ?? '🎵'}</Text>
+                <InstrumentTile id={instrument.id} size={44} />
                 <Text style={styles.cardName}>{instrument.name}</Text>
-                <Text style={[styles.toggle, current && { color: colors.primary }]}>
-                  {current ? 'Tenho ✓' : 'Adicionar'}
+                <Text style={[styles.toggle, current && { color: colors.green }]}>
+                  {current ? 'Tenho' : 'Adicionar'}
                 </Text>
               </Pressable>
 
@@ -249,8 +249,8 @@ export default function EditProfile() {
                     ))}
                   </View>
                   <Pressable onPress={() => setPrimaryId(instrument.id)} disabled={isPrimary}>
-                    <Text style={[styles.primary, isPrimary && { color: colors.primary }]}>
-                      {isPrimary ? '★ Instrumento principal' : '☆ Tornar principal'}
+                    <Text style={[styles.primary, isPrimary && { color: colors.primarySoft }]}>
+                      {isPrimary ? 'Instrumento principal' : 'Tornar principal'}
                     </Text>
                   </Pressable>
                 </View>
@@ -267,35 +267,32 @@ export default function EditProfile() {
 }
 
 const styles = StyleSheet.create({
-  title: { color: colors.text, fontSize: 28, fontWeight: '700' },
-  muted: { color: colors.textMuted, fontSize: 13 },
+  muted: { color: colors.textMuted, fontSize: 13, fontFamily: fonts.body },
   avatarWrap: { alignSelf: 'center', alignItems: 'center', gap: spacing.sm, marginVertical: spacing.sm },
-  avatarHint: { color: colors.primary, fontSize: 14, fontWeight: '600' },
-  section: { color: colors.text, fontSize: 18, fontWeight: '600', marginTop: spacing.md },
+  avatarHint: { color: colors.primarySoft, fontSize: 14, fontFamily: fonts.bodySemi },
   card: {
     padding: spacing.md,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
     gap: spacing.sm,
   },
-  cardSelected: { borderColor: colors.primary },
+  cardSelected: { borderColor: 'rgba(138,77,255,0.55)' },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  emoji: { fontSize: 26 },
-  cardName: { color: colors.text, fontSize: 17, fontWeight: '600', flex: 1 },
-  toggle: { color: colors.textMuted, fontSize: 14, fontWeight: '700' },
+  cardName: { color: colors.text, fontSize: 17, fontFamily: fonts.title, flex: 1 },
+  toggle: { color: colors.textMuted, fontSize: 14, fontFamily: fonts.bodySemi },
   levels: { flexDirection: 'row', gap: spacing.xs },
   level: {
     flex: 1,
-    paddingVertical: 9,
-    borderRadius: radius.md,
+    paddingVertical: 10,
+    borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: 'center',
   },
-  levelActive: { borderColor: colors.primary },
-  levelText: { color: colors.textMuted, fontSize: 12 },
-  levelTextActive: { color: colors.primary, fontWeight: '700' },
-  primary: { color: colors.textMuted, fontSize: 13, fontWeight: '600' },
+  levelActive: { borderColor: colors.primary, backgroundColor: colors.primaryTint },
+  levelText: { color: colors.textMuted, fontSize: 12, fontFamily: fonts.bodyMedium },
+  levelTextActive: { color: colors.primarySoft, fontFamily: fonts.bodySemi },
+  primary: { color: colors.textMuted, fontSize: 13, fontFamily: fonts.bodyMedium },
 });
