@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { TodayPlanCard } from '../../../components/TodayPlanCard';
 import { Screen } from '../../../components/ui';
 import { colors, radius, spacing } from '../../../lib/theme';
 import { INSTRUMENT_EMOJI, useMyInstruments, useProfile } from '../../../features/profile/api';
@@ -48,6 +49,8 @@ export default function Home() {
           </Text>
         </Pressable>
       ) : null}
+
+      <TodayPlanCard />
 
       <Text style={styles.section}>O que você quer praticar hoje?</Text>
       <View style={{ gap: spacing.sm }}>

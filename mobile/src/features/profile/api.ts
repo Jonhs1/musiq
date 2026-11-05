@@ -11,6 +11,7 @@ export type Profile = {
   level: number;
   streak_days: number;
   total_practice_seconds: number;
+  daily_goal_minutes: number;
 };
 
 export type Instrument = { id: string; name: string };
@@ -37,7 +38,7 @@ export function useProfile() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, nickname, avatar_url, xp, level, streak_days, total_practice_seconds')
+        .select('id, full_name, nickname, avatar_url, xp, level, streak_days, total_practice_seconds, daily_goal_minutes')
         .eq('id', userId!)
         .single();
       if (error) throw error;

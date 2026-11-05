@@ -16,10 +16,13 @@ export default function TabsLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
+        tabBarLabelStyle: { fontSize: 10 },
         sceneStyle: { backgroundColor: colors.background },
       }}
     >
       <Tabs.Screen name="home" options={{ title: 'Início', tabBarIcon: icon('🏠') }} />
+      <Tabs.Screen name="plan" options={{ title: 'Plano', tabBarIcon: icon('📅') }} />
+      <Tabs.Screen name="challenges" options={{ title: 'Desafios', tabBarIcon: icon('🎯') }} />
       <Tabs.Screen name="achievements" options={{ title: 'Conquistas', tabBarIcon: icon('🏅') }} />
       <Tabs.Screen name="ranking" options={{ title: 'Ranking', tabBarIcon: icon('🏆') }} />
       <Tabs.Screen name="profile" options={{ title: 'Perfil', tabBarIcon: icon('👤') }} />

@@ -139,6 +139,9 @@ export default function Practice() {
 
             // Sem await: se estiver offline, a atualização espera a internet voltar
             queryClient.invalidateQueries({ queryKey: ['profile', userId] });
+            queryClient.invalidateQueries({ queryKey: ['challenges'] });
+            queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+            queryClient.invalidateQueries({ queryKey: ['plan'] });
 
             const xp = xpById[sessionId];
             const sent = xp !== undefined;
