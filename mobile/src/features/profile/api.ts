@@ -54,7 +54,7 @@ export function useInstruments() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('instruments')
-        .select('instrument_id, is_primary, experience_level, instruments(name)')
+        .select('id, name')
         .order('sort_order');
       if (error) throw error;
       return data as Instrument[];
@@ -71,7 +71,7 @@ export function useMyInstruments() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_instruments')
-        .select('instrument_id, is_primary, instruments(name)')
+        .select('instrument_id, is_primary, experience_level, instruments(name)')
         .eq('user_id', userId!)
         .order('is_primary', { ascending: false });
       if (error) throw error;
