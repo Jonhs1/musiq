@@ -4,7 +4,9 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Button, ErrorText, Screen } from '../../../components/ui';
-import { saveSession, useExercise } from '../../../features/exercises/api';
+import * as Crypto from 'expo-crypto';
+import { useExercise } from '../../../features/exercises/api';
+import { enqueueSession, syncPendingSessions } from '../../../lib/pendingSessions';
 import { useAuth } from '../../../lib/auth';
 import { formatDuration } from '../../../lib/format';
 import { colors, radius, spacing } from '../../../lib/theme';
@@ -87,7 +89,7 @@ export default function Practice() {
     ]);
   }
 
-  async function finish() {
+      async function finish() {
     if (!exercise || !session) return;
     const seconds = Math.floor(totalMs() / 1000);
     if (seconds < 10) {
@@ -98,23 +100,43 @@ export default function Practice() {
     setSaving(true);
     setError(null);
     try {
-      const xp = await saveSession({
-        userId: session.user.id,
-        instrumentId: exercise.instrument_id,
-        exerciseId: exercise.id,
-        startedAt: startedAt.current,
-        durationSeconds: seconds,
-        bpmStart: bpmStart.current ?? 60,
-        bpmMax: bpmMax.current || (bpmStart.current ?? 60),
-        notes,
+      const userId = session.user.id;
+      const sessionId = Crypto.randomUUID();
+
+      // 1. Guarda no aparelho (nunca se perde)  2. Tenta enviar agora, com limite de tempo
+      await enqueueSession({
+        id: sessionId,
+        user_id: userId,
+        instrument_id: exercise.instrument_id,
+        exercise_id: exercise.id,
+        started_at: startedAt.current,
+        duration_seconds: seconds,
+        bpm_start: bpmStart.current ?? 60,
+        bpm_max: bpmMax.current || (bpmStart.current ?? 60),
+        notes: notes.trim() || null,
       });
-      await queryClient.invalidateQueries({ queryKey: ['profile', session.user.id] });
-      Alert.alert('Sessão salva!', `${formatDuration(seconds)} praticados · +${xp} XP`, [
-        { text: 'OK', onPress: () => router.dismissAll() },
+
+      const syncResult = await Promise.race([
+        syncPendingSessions(userId),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000)),
       ]);
+      const xpById = syncResult?.xpById ?? {};
+
+      // Sem await: se estiver offline, a atualização espera a internet voltar
+      queryClient.invalidateQueries({ queryKey: ['profile', userId] });
+
+      const xp = xpById[sessionId];
+      const sent = xp !== undefined;
+      Alert.alert(
+        sent ? 'Sessão salva!' : 'Sessão guardada!',
+        sent
+          ? `${formatDuration(seconds)} praticados · +${xp} XP`
+          : `${formatDuration(seconds)} praticados. Sem conexão agora: a sessão será enviada automaticamente quando você estiver online.`,
+        [{ text: 'OK', onPress: () => router.dismissAll() }],
+      );
     } catch (e) {
-      console.warn('saveSession error:', e);
-      setError(`Não foi possível salvar: ${e instanceof Error ? e.message : String(e)}`);
+      console.warn('finish error:', e);
+      setError(`Não foi possível guardar a sessão: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setSaving(false);
     }

@@ -1,12 +1,38 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+import { onlineManager, QueryClient } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider, useAuth } from '../lib/auth';
+import { SyncManager } from '../components/SyncManager';
 import { useProfile } from '../features/profile/api';
+import { AuthProvider, useAuth } from '../lib/auth';
 import { colors } from '../lib/theme';
 
-const queryClient = new QueryClient();
+const WEEK_MS = 1000 * 60 * 60 * 24 * 7;
+
+// Informa ao React Query quando o aparelho está online
+onlineManager.setEventListener((setOnline) =>
+  NetInfo.addEventListener((state) => setOnline(state.isConnected !== false)),
+);
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      gcTime: WEEK_MS,
+      staleTime: 1000 * 60 * 5,
+      networkMode: 'offlineFirst',
+      retry: 1,
+    },
+  },
+});
+
+const persister = createAsyncStoragePersister({
+  storage: AsyncStorage,
+  key: 'musiq-query-cache',
+});
 
 function RootNavigator() {
   const { session, loading } = useAuth();
@@ -47,11 +73,15 @@ function RootNavigator() {
 
 export default function RootLayout() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{ persister, maxAge: WEEK_MS, buster: 'v1' }}
+    >
       <AuthProvider>
         <StatusBar style="light" />
+        <SyncManager />
         <RootNavigator />
       </AuthProvider>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 }

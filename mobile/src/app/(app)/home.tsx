@@ -1,17 +1,39 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Button, Screen } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
 import { colors, radius, spacing } from '../../lib/theme';
 import { INSTRUMENT_EMOJI, useMyInstruments, useProfile } from '../../features/profile/api';
+import { useAuth } from '../../lib/auth';
 import { formatDuration } from '../../lib/format';
+import { syncPendingSessions, usePendingCount } from '../../lib/pendingSessions';
 
 export default function Home() {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const { session } = useAuth();
   const { data: profile } = useProfile();
   const { data: myInstruments } = useMyInstruments();
+  const pending = usePendingCount((state) => state.count);
 
   const totalMinutes = Math.floor((profile?.total_practice_seconds ?? 0) / 60);
+
+  async function retryNow() {
+    if (!session) {
+      Alert.alert('Envio', 'Você não está logado.');
+      return;
+    }
+    const result = await syncPendingSessions(session.user.id);
+    if (result.synced > 0) {
+      queryClient.invalidateQueries({ queryKey: ['profile', session.user.id] });
+    }
+    Alert.alert(
+      'Envio',
+      `Na fila desta conta: ${result.attempted}\nEnviadas agora: ${result.synced}\nDe outra conta: ${result.otherUsers}` +
+        (result.lastError ? `\nErro: ${result.lastError}` : ''),
+    );
+  }
 
   return (
     <Screen>
@@ -22,6 +44,13 @@ export default function Home() {
       <Text style={styles.stats}>
         Total praticado: {formatDuration((profile?.total_practice_seconds ?? 0) % 3600)} ({totalMinutes} min)
       </Text>
+      {pending > 0 ? (
+        <Pressable onPress={retryNow}>
+          <Text style={styles.pending}>
+            ⏳ {pending} sessão(ões) aguardando envio · toque para tentar agora
+          </Text>
+        </Pressable>
+      ) : null}
 
       <Text style={styles.section}>O que você quer praticar hoje?</Text>
       <View style={{ gap: spacing.sm }}>
@@ -50,6 +79,7 @@ export default function Home() {
 const styles = StyleSheet.create({
   greeting: { color: colors.text, fontSize: 28, fontWeight: '700', marginTop: spacing.md },
   stats: { color: colors.textMuted, fontSize: 14 },
+  pending: { color: colors.gold, fontSize: 13 },
   section: { color: colors.text, fontSize: 18, fontWeight: '600', marginTop: spacing.lg },
   card: {
     flexDirection: 'row',
