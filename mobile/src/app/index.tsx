@@ -1,17 +1,12 @@
-import { StyleSheet, Text, View } from 'react-native';
-import { colors, spacing } from '../lib/theme';
+import { Redirect } from 'expo-router';
+import { useAuth } from '../lib/auth';
+import { useProfile } from '../features/profile/api';
 
-export default function Home() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.logo}>MUSIQ</Text>
-      <Text style={styles.tagline}>Pratique. Evolua. Domine.</Text>
-    </View>
-  );
+export default function Index() {
+  const { session } = useAuth();
+  const { data: profile } = useProfile();
+
+  if (!session) return <Redirect href="/login" />;
+  if (profile && !profile.nickname) return <Redirect href="/profile-setup" />;
+  return <Redirect href="/home" />;
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
-  logo: { color: colors.primary, fontSize: 48, fontWeight: '800', letterSpacing: 4 },
-  tagline: { color: colors.textMuted, fontSize: 16 },
-});
