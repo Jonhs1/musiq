@@ -19,6 +19,7 @@ export type Instrument = { id: string; name: string };
 export type MyInstrument = {
   instrument_id: string;
   is_primary: boolean;
+  experience_level: 'beginner' | 'intermediate' | 'advanced';
   instruments: { name: string };
 };
 
@@ -53,7 +54,7 @@ export function useInstruments() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('instruments')
-        .select('id, name')
+        .select('instrument_id, is_primary, experience_level, instruments(name)')
         .order('sort_order');
       if (error) throw error;
       return data as Instrument[];

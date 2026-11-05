@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { Avatar } from '../../../components/Avatar';
 import { Button, Screen } from '../../../components/ui';
@@ -7,6 +8,12 @@ import { levelProgress, levelTitle } from '../../../lib/level';
 import { supabase } from '../../../lib/supabase';
 import { colors, radius, spacing } from '../../../lib/theme';
 
+const LEVEL_LABELS = {
+  beginner: 'Iniciante',
+  intermediate: 'Intermediário',
+  advanced: 'Avançado',
+} as const;
+
 function formatTotalTime(totalSeconds: number) {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -14,6 +21,7 @@ function formatTotalTime(totalSeconds: number) {
 }
 
 export default function Profile() {
+  const router = useRouter();
   const { data: profile } = useProfile();
   const { data: myInstruments } = useMyInstruments();
   const { data: unlocked } = useUnlockedAchievements();
@@ -28,6 +36,8 @@ export default function Profile() {
         <Text style={styles.nickname}>{profile?.nickname}</Text>
         {profile?.full_name ? <Text style={styles.fullName}>{profile.full_name}</Text> : null}
       </View>
+
+      <Button title="Editar perfil" variant="ghost" onPress={() => router.push('/edit-profile')} />
 
       <View style={styles.card}>
         <Text style={styles.levelTitle}>
@@ -52,7 +62,10 @@ export default function Profile() {
         {myInstruments?.map((item) => (
           <View key={item.instrument_id} style={styles.instrument}>
             <Text style={styles.emoji}>{INSTRUMENT_EMOJI[item.instrument_id] ?? '🎵'}</Text>
-            <Text style={styles.instrumentName}>{item.instruments.name}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.instrumentName}>{item.instruments.name}</Text>
+              <Text style={styles.instrumentLevel}>{LEVEL_LABELS[item.experience_level] ?? ''}</Text>
+            </View>
             {item.is_primary ? <Text style={styles.primaryTag}>principal</Text> : null}
           </View>
         ))}
@@ -115,6 +128,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   emoji: { fontSize: 24 },
-  instrumentName: { color: colors.text, fontSize: 16, fontWeight: '600', flex: 1 },
+  instrumentName: { color: colors.text, fontSize: 16, fontWeight: '600' },
+  instrumentLevel: { color: colors.textMuted, fontSize: 12 },
   primaryTag: { color: colors.primary, fontSize: 12 },
 });
