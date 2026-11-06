@@ -11,6 +11,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { ActivityIndicator, Image, View } from 'react-native';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SyncManager } from '../components/SyncManager';
 import { useProfile } from '../features/profile/api';
 import { AuthProvider, useAuth } from '../lib/auth';
@@ -99,15 +100,17 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <PersistQueryClientProvider
-      client={queryClient}
-      persistOptions={{ persister, maxAge: WEEK_MS, buster: 'v1' }}
-    >
-      <AuthProvider>
-        <StatusBar style="light" />
-        <SyncManager />
-        <RootNavigator />
-      </AuthProvider>
-    </PersistQueryClientProvider>
+    <KeyboardProvider statusBarTranslucent navigationBarTranslucent>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={{ persister, maxAge: WEEK_MS, buster: 'v1' }}
+      >
+        <AuthProvider>
+          <StatusBar style="light" />
+          <SyncManager />
+          <RootNavigator />
+        </AuthProvider>
+      </PersistQueryClientProvider>
+    </KeyboardProvider>
   );
 }

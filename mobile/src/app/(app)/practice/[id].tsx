@@ -50,7 +50,6 @@ export default function Practice() {
             const initial = clampBpm(exercise.recommended_bpm ?? 60);
             setInitialBpm(initial);
             bpmStart.current = initial;
-            bpmMax.current = initial;
         }
     }, [exercise, initialBpm]);
 
@@ -96,6 +95,7 @@ export default function Practice() {
     }
 
     function handleBpm(bpm: number) {
+        if (!metronomeUsed.current) return;
         bpmMax.current = Math.max(bpmMax.current, clampBpm(bpm));
     }
 
@@ -130,6 +130,7 @@ export default function Practice() {
                 duration_seconds: seconds,
                 bpm_start: bpmStart.current ?? 60,
                 bpm_max: bpmMax.current || (bpmStart.current ?? 60),
+                used_metronome: metronomeUsed.current,
                 notes: notes.trim() || null,
             });
 

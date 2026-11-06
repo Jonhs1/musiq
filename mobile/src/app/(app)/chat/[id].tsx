@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '../../../components/Avatar';
 import { Icon } from '../../../components/Icon';
@@ -15,6 +16,7 @@ import {
 import { Composer } from '../../../features/chat/Composer';
 import { MessageBubble } from '../../../features/chat/MessageBubble';
 import { useFriends } from '../../../features/friends/api';
+import { setActiveChat } from '../../../features/notifications/activeChat';
 import { useAuth } from '../../../lib/auth';
 import { colors, fonts } from '../../../lib/theme';
 
@@ -41,6 +43,12 @@ export default function ChatScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, newest, unread]);
 
+  // avisa o sistema de push qual conversa está aberta
+  useEffect(() => {
+    setActiveChat(id ?? null);
+    return () => setActiveChat(null);
+  }, [id]);
+
   function fail(e: unknown) {
     console.warn('chat send error:', e);
     Alert.alert('Não foi possível enviar', 'Verifique a conexão e tente de novo.');
@@ -63,7 +71,7 @@ export default function ChatScreen() {
         </Pressable>
       </View>
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
         {isLoading ? (
           <View style={styles.center}>
             <ActivityIndicator color={colors.primarySoft} />

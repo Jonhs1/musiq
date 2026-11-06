@@ -1,10 +1,11 @@
 import { Stack } from 'expo-router';
-import { colors } from '../../lib/theme';
 import { useChatRealtime } from '../../features/chat/realtime';
-
+import { usePushNotifications } from '../../features/notifications/usePushNotifications';
+import { colors } from '../../lib/theme';
 
 export default function AppLayout() {
   useChatRealtime();
+  usePushNotifications();
   return (
     <Stack
       screenOptions={{

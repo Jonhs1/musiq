@@ -4,6 +4,7 @@ import { Avatar } from '../../../components/Avatar';
 import { Icon, InstrumentTile } from '../../../components/Icon';
 import { Button, Card, IconButton, ProgressBar, Reveal, Screen, SectionLabel } from '../../../components/ui';
 import { useAchievements, useUnlockedAchievements } from '../../../features/achievements/api';
+import { unregisterPush } from '../../../features/notifications/usePushNotifications';
 import { useMyInstruments, useProfile } from '../../../features/profile/api';
 import { levelProgress, levelTitle } from '../../../lib/level';
 import { supabase } from '../../../lib/supabase';
@@ -116,7 +117,15 @@ export default function Profile() {
       </View>
 
       <View style={{ marginTop: spacing.lg }}>
-        <Button title="Sair" variant="ghost" icon="log-out-outline" onPress={() => supabase.auth.signOut()} />
+        <Button
+          title="Sair"
+          variant="ghost"
+          icon="log-out-outline"
+          onPress={async () => {
+            await unregisterPush();
+            await supabase.auth.signOut();
+          }}
+        />
       </View>
     </Screen>
   );

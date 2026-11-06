@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "906681626093",
+    "project_id": "snaketune-98c3b",
+    "storage_bucket": "snaketune-98c3b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:906681626093:android:d8fb544912fb187f0c4be4",
+        "android_client_info": {
+          "package_name": "com.snakeshot.snaketune"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCx_Z8Cgb9-qWymhie7TAv5TDWHgHGpjPM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -2,8 +2,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ReactNode, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleProp,
@@ -14,7 +12,8 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { KeyboardAvoidingView, KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import Animated, { useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts, gradients, radius, spacing } from '../lib/theme';
 import { Icon, IconName } from './Icon';
@@ -24,19 +23,20 @@ export function Screen({ children, scroll = true }: { children: ReactNode; scrol
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <LinearGradient colors={gradients.glow} style={styles.glow} pointerEvents="none" />
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        {scroll ? (
-          <ScrollView
-            contentContainerStyle={{ padding: spacing.lg, paddingBottom: 40, gap: spacing.md, flexGrow: 1 }}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            {children}
-          </ScrollView>
-        ) : (
+      {scroll ? (
+        <KeyboardAwareScrollView
+          bottomOffset={24}
+          contentContainerStyle={{ padding: spacing.lg, paddingBottom: 40, gap: spacing.md, flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {children}
+        </KeyboardAwareScrollView>
+      ) : (
+        <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
           <View style={{ flex: 1, padding: spacing.lg, gap: spacing.md }}>{children}</View>
-        )}
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      )}
     </SafeAreaView>
   );
 }
@@ -51,8 +51,19 @@ export function Reveal({
   index?: number;
   style?: StyleProp<ViewStyle>;
 }) {
+  'use no memo';
+  const progress = useSharedValue(0);
+  useEffect(() => {
+    progress.value = withDelay(Math.min(index, 8) * 55, withTiming(1, { duration: 380 }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // só opacidade + transform: não mexe no layout, então nunca sobrepõe cartões
+  const animated = useAnimatedStyle(() => ({
+    opacity: progress.value,
+    transform: [{ translateY: (1 - progress.value) * 14 }],
+  }));
   return (
-    <Animated.View entering={FadeInDown.duration(380).delay(Math.min(index, 8) * 55)} style={style}>
+    <Animated.View collapsable={false} style={[style, animated]}>
       {children}
     </Animated.View>
   );
