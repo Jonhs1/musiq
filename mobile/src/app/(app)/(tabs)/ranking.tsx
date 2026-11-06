@@ -1,12 +1,12 @@
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Avatar } from '../../../components/Avatar';
 import { Icon, InstrumentIcon } from '../../../components/Icon';
 import { Chip, ErrorText, Reveal, Screen, Subtitle, Title } from '../../../components/ui';
 import { useInstruments } from '../../../features/profile/api';
-import { GRACE_DAYS, useInstrumentLeaderboard, useLeaderboard } from '../../../features/ranking/api';
+import { GRACE_DAYS, RankingScope, useInstrumentLeaderboard, useLeaderboard } from '../../../features/ranking/api';
 import { useAuth } from '../../../lib/auth';
 import { colors, fonts, gradients, radius, spacing } from '../../../lib/theme';
 
@@ -24,19 +24,21 @@ type Row = {
 };
 
 export default function Ranking() {
+  const router = useRouter();
   const { session } = useAuth();
+  const [scope, setScope] = useState<RankingScope>('all');
   const { data: instruments } = useInstruments();
   const [instrumentId, setInstrumentId] = useState<string | null>(null); // null = geral
 
-  const general = useLeaderboard(instrumentId === null);
-  const byInstrument = useInstrumentLeaderboard(instrumentId);
+  const general = useLeaderboard(instrumentId === null, scope);
+  const byInstrument = useInstrumentLeaderboard(instrumentId, scope);
   const active = instrumentId === null ? general : byInstrument;
 
   useFocusEffect(
     useCallback(() => {
       active.refetch();
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [instrumentId]),
+    }, [instrumentId, scope]),
   );
 
   const rows: Row[] =
@@ -72,6 +74,20 @@ export default function Ranking() {
       <Reveal index={0}>
         <Title>Ranking</Title>
       </Reveal>
+
+      <View style={styles.segment}>
+        {(['all', 'friends'] as const).map((item) => (
+          <Pressable
+            key={item}
+            onPress={() => setScope(item)}
+            style={[styles.segmentItem, scope === item && styles.segmentItemActive]}
+          >
+            <Text style={[styles.segmentText, scope === item && styles.segmentTextActive]}>
+              {item === 'all' ? 'Todos' : 'Amigos'}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
 
       <ScrollView
         horizontal
@@ -116,7 +132,7 @@ export default function Ranking() {
       {active.isLoading ? <ActivityIndicator color={colors.primarySoft} /> : null}
       {active.isError ? <ErrorText>Não foi possível carregar o ranking.</ErrorText> : null}
       {!active.isLoading && !active.isError && rows.length === 0 ? (
-        <Subtitle>Ninguém no ranking ainda. Pratique para entrar!</Subtitle>
+        <Subtitle>{scope === 'friends' ? 'Adicione amigos para comparar o ranking com eles.' : 'Ninguém no ranking ainda. Pratique para entrar!'}</Subtitle>
       ) : null}
 
       <View style={{ gap: 10 }}>
@@ -149,13 +165,23 @@ export default function Ranking() {
           );
           return (
             <Reveal key={row.key} index={index + 1}>
-              {isMe ? (
-                <LinearGradient colors={gradients.me} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.row, styles.rowMe]}>
-                  {content}
-                </LinearGradient>
-              ) : (
-                <View style={[styles.row, styles.rowBase]}>{content}</View>
-              )}
+              <Pressable
+                onPress={() =>
+                  isMe
+                    ? router.push('/profile')
+                    : scope === 'friends'
+                      ? router.push({ pathname: '/friend/[id]', params: { id: row.userId } })
+                      : undefined
+                }
+              >
+                {isMe ? (
+                  <LinearGradient colors={gradients.me} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.row, styles.rowMe]}>
+                    {content}
+                  </LinearGradient>
+                ) : (
+                  <View style={[styles.row, styles.rowBase]}>{content}</View>
+                )}
+              </Pressable>
             </Reveal>
           );
         })}
@@ -165,6 +191,18 @@ export default function Ranking() {
 }
 
 const styles = StyleSheet.create({
+  segment: {
+    flexDirection: 'row',
+    padding: 4,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  segmentItem: { flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: radius.pill },
+  segmentItemActive: { backgroundColor: colors.primaryTint },
+  segmentText: { color: colors.textMuted, fontSize: 14, fontFamily: fonts.bodyMedium },
+  segmentTextActive: { color: colors.primarySoft, fontFamily: fonts.bodySemi },
   chips: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
   info: {
     flexDirection: 'row',

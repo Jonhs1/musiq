@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Avatar } from '../../../components/Avatar';
 import { Icon, InstrumentTile } from '../../../components/Icon';
+import { useFriendRequests } from '../../../features/friends/api';
 import { TodayPlanCard } from '../../../components/TodayPlanCard';
 import { Card, ProgressBar, Reveal, Screen, SectionLabel } from '../../../components/ui';
 import { useMyInstruments, useProfile } from '../../../features/profile/api';
@@ -18,6 +19,8 @@ export default function Home() {
   const { data: profile } = useProfile();
   const { data: myInstruments } = useMyInstruments();
   const pending = usePendingCount((state) => state.count);
+  const { data: requests } = useFriendRequests();
+  const incoming = requests?.filter((item) => item.direction === 'incoming').length ?? 0;
 
   const xp = profile?.xp ?? 0;
   const progress = levelProgress(xp);
@@ -46,6 +49,14 @@ export default function Home() {
             {profile?.nickname}
           </Text>
         </View>
+        <Pressable onPress={() => router.push('/friends')} hitSlop={8} style={styles.friendsButton}>
+          <Icon name="people" size={22} color={colors.primarySoft} />
+          {incoming > 0 ? (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{incoming}</Text>
+            </View>
+          ) : null}
+        </Pressable>
         <Pressable onPress={() => router.push('/profile')}>
           <Avatar uri={profile?.avatar_url} name={profile?.nickname} size={48} ring />
         </Pressable>
@@ -137,6 +148,29 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.sm },
   hello: { color: colors.textMuted, fontSize: 14, fontFamily: fonts.body },
   name: { color: colors.text, fontSize: 30, lineHeight: 36, fontFamily: fonts.titleBold },
+  friendsButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    paddingHorizontal: 5,
+    backgroundColor: colors.magenta,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: { color: '#fff', fontSize: 11, fontFamily: fonts.bodySemi },
   pending: {
     flexDirection: 'row',
     alignItems: 'center',
