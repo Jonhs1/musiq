@@ -15,6 +15,7 @@ export type Message = {
   media_duration_ms: number | null;
   created_at: string;
   read_at: string | null;
+  deleted_at: string | null;
 };
 
 export type Conversation = {
@@ -26,6 +27,7 @@ export type Conversation = {
   last_sender_id: string | null;
   last_at: string | null;
   unread_count: number;
+  last_deleted: boolean;
 };
 
 const BUCKET = 'chat-media';
@@ -127,6 +129,27 @@ export function useSendMedia(friendId: string) {
       if (error) throw error;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages', friendId] });
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    },
+  });
+}
+
+/** Apaga uma mensagem sua para os dois lados; foto/áudio também saem do armazenamento */
+export function useDeleteMessage(friendId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (messageId: string) => {
+      const { data, error } = await supabase.rpc('delete_message', { p_id: messageId });
+      if (error) throw error;
+      const path = data as string | null;
+      if (path) {
+        // a mensagem já foi apagada; se a remoção do arquivo falhar, só sobra um arquivo órfão
+        const { error: removeError } = await supabase.storage.from(BUCKET).remove([path]);
+        if (removeError) console.warn('chat media remove error:', removeError.message);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['messages', friendId] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },

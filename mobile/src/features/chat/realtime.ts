@@ -31,6 +31,15 @@ export function useChatRealtime() {
           });
         },
       )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'messages', filter: `recipient_id=eq.${userId}` },
+        (payload) => {
+          // o amigo apagou uma mensagem
+          queryClient.invalidateQueries({ queryKey: ['conversations'] });
+          queryClient.invalidateQueries({ queryKey: ['messages', (payload.new as { sender_id: string }).sender_id] });
+        },
+      )
       .subscribe();
 
     return () => {

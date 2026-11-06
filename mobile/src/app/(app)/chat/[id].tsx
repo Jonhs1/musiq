@@ -8,6 +8,7 @@ import { Icon } from '../../../components/Icon';
 import {
   Message,
   useConversations,
+  useDeleteMessage,
   useMarkRead,
   useMessages,
   useSendMedia,
@@ -33,6 +34,7 @@ export default function ChatScreen() {
   const markRead = useMarkRead();
   const sendText = useSendText(id);
   const sendMedia = useSendMedia(id);
+  const deleteMessage = useDeleteMessage(id);
 
   const unread = conversations?.find((item) => item.friend_id === id)?.unread_count ?? 0;
   const newest = messages?.[0]?.id;
@@ -52,6 +54,20 @@ export default function ChatScreen() {
   function fail(e: unknown) {
     console.warn('chat send error:', e);
     Alert.alert('Não foi possível enviar', 'Verifique a conexão e tente de novo.');
+  }
+
+  function confirmDelete(messageId: string) {
+    Alert.alert('Apagar mensagem?', 'Ela some para você e para o seu amigo. Não dá para desfazer.', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Apagar',
+        style: 'destructive',
+        onPress: () =>
+          deleteMessage.mutate(messageId, {
+            onError: () => Alert.alert('Não foi possível apagar', 'Verifique a conexão e tente de novo.'),
+          }),
+      },
+    ]);
   }
 
   return (
@@ -81,7 +97,13 @@ export default function ChatScreen() {
             data={messages ?? []}
             inverted
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <MessageBubble message={item} mine={item.sender_id === me} />}
+            renderItem={({ item }) => (
+              <MessageBubble
+                message={item}
+                mine={item.sender_id === me}
+                onLongPress={() => confirmDelete(item.id)}
+              />
+            )}
             contentContainerStyle={{ paddingVertical: 12 }}
             keyboardShouldPersistTaps="handled"
             ListEmptyComponent={

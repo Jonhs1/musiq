@@ -14,18 +14,46 @@ function hourLabel(iso: string) {
   return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
-export function MessageBubble({ message, mine }: { message: Message; mine: boolean }) {
+export function MessageBubble({
+  message,
+  mine,
+  onLongPress,
+}: {
+  message: Message;
+  mine: boolean;
+  onLongPress?: () => void;
+}) {
+  const deleted = message.deleted_at !== null;
+  // só o dono pode apagar, e só enquanto a mensagem existe
+  const press = mine && !deleted ? onLongPress : undefined;
+
   return (
     <View style={[styles.row, mine ? styles.rowMine : styles.rowTheirs]}>
-      <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleTheirs, message.kind === 'image' && styles.bubbleImage]}>
-        {message.kind === 'text' ? <Text style={styles.text}>{message.body}</Text> : null}
-        {message.kind === 'image' ? <ImageContent path={message.media_path} /> : null}
-        {message.kind === 'audio' ? (
+      <Pressable
+        onLongPress={press}
+        delayLongPress={350}
+        disabled={!press}
+        style={[
+          styles.bubble,
+          mine ? styles.bubbleMine : styles.bubbleTheirs,
+          !deleted && message.kind === 'image' && styles.bubbleImage,
+          deleted && styles.bubbleDeleted,
+        ]}
+      >
+        {deleted ? (
+          <View style={styles.deletedRow}>
+            <Icon name="ban-outline" size={14} color={colors.textMuted} />
+            <Text style={styles.deletedText}>Mensagem apagada</Text>
+          </View>
+        ) : null}
+        {!deleted && message.kind === 'text' ? <Text style={styles.text}>{message.body}</Text> : null}
+        {!deleted && message.kind === 'image' ? <ImageContent path={message.media_path} onLongPress={press} /> : null}
+        {!deleted && message.kind === 'audio' ? (
           <AudioContent path={message.media_path} durationMs={message.media_duration_ms} />
         ) : null}
         <View style={styles.meta}>
           <Text style={styles.time}>{hourLabel(message.created_at)}</Text>
-          {mine ? (
+          {mine && !deleted ? (
             <Icon
               name={message.read_at ? 'checkmark-done' : 'checkmark'}
               size={14}
@@ -33,12 +61,12 @@ export function MessageBubble({ message, mine }: { message: Message; mine: boole
             />
           ) : null}
         </View>
-      </View>
+      </Pressable>
     </View>
   );
 }
 
-function ImageContent({ path }: { path: string | null }) {
+function ImageContent({ path, onLongPress }: { path: string | null; onLongPress?: () => void }) {
   const { data: url, isLoading } = useMediaUrl(path);
   const [open, setOpen] = useState(false);
 
@@ -52,7 +80,7 @@ function ImageContent({ path }: { path: string | null }) {
 
   return (
     <>
-      <Pressable onPress={() => setOpen(true)}>
+      <Pressable onPress={() => setOpen(true)} onLongPress={onLongPress} delayLongPress={350}>
         <Image source={{ uri: url }} style={styles.image} resizeMode="cover" />
       </Pressable>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
@@ -118,6 +146,9 @@ const styles = StyleSheet.create({
   bubbleMine: { backgroundColor: colors.primaryDeep, borderBottomRightRadius: 6 },
   bubbleTheirs: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderBottomLeftRadius: 6 },
   bubbleImage: { padding: 4 },
+  bubbleDeleted: { opacity: 0.75 },
+  deletedRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  deletedText: { color: colors.textMuted, fontSize: 14, fontStyle: 'italic', fontFamily: fonts.body },
   text: { color: colors.text, fontSize: 15, lineHeight: 21, fontFamily: fonts.body },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-end', paddingRight: 4 },
   time: { color: 'rgba(237,231,238,0.55)', fontSize: 11, fontFamily: fonts.body },
