@@ -54,6 +54,9 @@ export default function Home() {
             {profile?.nickname}
           </Text>
         </View>
+        <Pressable onPress={() => router.push('/tuner')} hitSlop={8} style={styles.friendsButton}>
+          <Icon name="musical-note" size={22} color={colors.primarySoft} />
+        </Pressable>
         <Pressable onPress={() => router.push('/friends')} hitSlop={8} style={styles.friendsButton}>
           <Icon name="people" size={22} color={colors.primarySoft} />
           {incoming > 0 ? (

@@ -63,6 +63,17 @@
           "photosPermission": "O SnakeTune acessa suas fotos para enviar imagens no chat e trocar seu avatar."
         }
       ],
+      [
+        "react-native-audio-api",
+        {
+          "iosMicrophonePermission": "O SnakeTune usa o microfone para o afinador e para mensagens de áudio.",
+          "iosBackgroundMode": false,
+          "androidPermissions": ["android.permission.RECORD_AUDIO"],
+          "androidForegroundService": false,
+          "androidFSTypes": [],
+          "androidFSStopWithTask": false
+        }
+      ],
       "expo-notifications"
     ],
     "experiments": {

@@ -3,7 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { BackButton } from '../../../components/BackButton';
 import { Dots } from '../../../components/Dots';
 import { Icon, InstrumentTile } from '../../../components/Icon';
-import { ErrorText, Reveal, Screen, Subtitle, Title } from '../../../components/ui';
+import { Chip, ErrorText, Reveal, Screen, Subtitle, Title } from '../../../components/ui';
 import { useExercises } from '../../../features/exercises/api';
 import { useInstruments } from '../../../features/profile/api';
 import { colors, fonts, radius, spacing } from '../../../lib/theme';
@@ -24,6 +24,14 @@ export default function InstrumentExercises() {
           <Title>{instrument?.name ?? ''}</Title>
           <Subtitle>Escolha um exercício para praticar.</Subtitle>
         </View>
+      </Reveal>
+
+      <Reveal index={1} style={{ alignSelf: 'flex-start' }}>
+        <Chip
+          label={`Afinar ${instrument?.name?.toLowerCase() ?? 'instrumento'}`}
+          icon={<Icon name="musical-note" size={16} color={colors.primarySoft} />}
+          onPress={() => router.push({ pathname: '/tuner', params: { instrument: id } })}
+        />
       </Reveal>
 
       {isLoading ? <ActivityIndicator color={colors.primarySoft} /> : null}
