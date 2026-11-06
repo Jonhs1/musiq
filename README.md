@@ -151,6 +151,6 @@ Tema escuro com roxo como cor principal, tipografia **Chakra Petch** nos título
 
 ---
 
-## 🤘 Sobre
+## 🤘 Autor
 
-Feito com carinho pela **SnakeShot**, para praticar mais e tocar melhor juntos.
+**João Victor Miranda Oliveira**
