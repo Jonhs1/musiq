@@ -5,6 +5,9 @@ import { Avatar } from '../../components/Avatar';
 import { BackButton } from '../../components/BackButton';
 import { Icon } from '../../components/Icon';
 import { Button, Card, Chip, ErrorText, Reveal, Screen, SectionLabel, TextField, Title } from '../../components/ui';
+import { useConversations } from '../../features/chat/api';
+import { DuelsList } from '../../features/duels/DuelsList';
+import { useIncomingDuelCount } from '../../features/duels/api';
 import {
   friendlyError,
   useFriendRequests,
@@ -18,12 +21,13 @@ import {
 } from '../../features/friends/api';
 import { colors, fonts, radius, spacing } from '../../lib/theme';
 
-type Tab = 'friends' | 'requests' | 'add';
+type Tab = 'friends' | 'requests' | 'duels' | 'add';
 
 export default function Friends() {
   const [tab, setTab] = useState<Tab>('friends');
   const { data: requests } = useFriendRequests();
   const incoming = requests?.filter((item) => item.direction === 'incoming').length ?? 0;
+  const incomingDuels = useIncomingDuelCount();
 
   return (
     <Screen>
@@ -39,11 +43,17 @@ export default function Friends() {
           active={tab === 'requests'}
           onPress={() => setTab('requests')}
         />
+        <Chip
+          label={incomingDuels > 0 ? `Desafios (${incomingDuels})` : 'Desafios'}
+          active={tab === 'duels'}
+          onPress={() => setTab('duels')}
+        />
         <Chip label="Adicionar" active={tab === 'add'} onPress={() => setTab('add')} />
       </View>
 
       {tab === 'friends' ? <FriendsList onAdd={() => setTab('add')} /> : null}
       {tab === 'requests' ? <Requests /> : null}
+      {tab === 'duels' ? <DuelsList /> : null}
       {tab === 'add' ? <AddFriend /> : null}
     </Screen>
   );
@@ -52,6 +62,8 @@ export default function Friends() {
 function FriendsList({ onAdd }: { onAdd: () => void }) {
   const router = useRouter();
   const { data: friends, isLoading, isError } = useFriends();
+  const { data: conversations } = useConversations();
+  const unreadByFriend = new Map((conversations ?? []).map((item) => [item.friend_id, item.unread_count]));
 
   if (isLoading) return <ActivityIndicator color={colors.primarySoft} />;
   if (isError) return <ErrorText>Não foi possível carregar seus amigos.</ErrorText>;
@@ -86,7 +98,18 @@ function FriendsList({ onAdd }: { onAdd: () => void }) {
                 <Text style={styles.streakText}>{friend.streak_days}</Text>
               </View>
             ) : null}
-            <Icon name="chevron-forward" size={20} color={colors.textDim} />
+            <Pressable
+              onPress={() => router.push({ pathname: '/chat/[id]', params: { id: friend.user_id } })}
+              hitSlop={8}
+              style={styles.chatButton}
+            >
+              <Icon name="chatbubble-ellipses" size={20} color={colors.primarySoft} />
+              {(unreadByFriend.get(friend.user_id) ?? 0) > 0 ? (
+                <View style={styles.chatBadge}>
+                  <Text style={styles.chatBadgeText}>{unreadByFriend.get(friend.user_id)}</Text>
+                </View>
+              ) : null}
+            </Pressable>
           </Pressable>
         </Reveal>
       ))}
@@ -264,6 +287,27 @@ function AddFriend() {
 }
 
 const styles = StyleSheet.create({
+  chatButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primaryTint,
+  },
+  chatBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 4,
+    backgroundColor: colors.magenta,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chatBadgeText: { color: '#fff', fontSize: 11, fontFamily: fonts.bodySemi },
   tabs: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   row: {
     flexDirection: 'row',

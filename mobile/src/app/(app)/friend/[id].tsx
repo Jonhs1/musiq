@@ -1,9 +1,11 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 import { Avatar } from '../../../components/Avatar';
 import { BackButton } from '../../../components/BackButton';
 import { Icon, InstrumentTile } from '../../../components/Icon';
 import { Button, Card, ErrorText, ProgressBar, Reveal, Screen, SectionLabel } from '../../../components/ui';
+import { CreateDuelModal } from '../../../features/duels/CreateDuelModal';
 import { friendlyError, useFriendProfile, useRemoveFriendship } from '../../../features/friends/api';
 import { levelProgress, levelTitle } from '../../../lib/level';
 import { colors, fonts, radius, spacing } from '../../../lib/theme';
@@ -25,6 +27,7 @@ export default function FriendProfileScreen() {
   const router = useRouter();
   const { data: profile, isLoading, isError, error } = useFriendProfile(id);
   const remove = useRemoveFriendship();
+  const [duelOpen, setDuelOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -75,6 +78,26 @@ export default function FriendProfileScreen() {
           </Text>
         ) : null}
       </Reveal>
+
+      <Reveal index={1} style={styles.actions}>
+        <View style={{ flex: 1 }}>
+          <Button
+            title="Conversar"
+            icon="chatbubble-ellipses"
+            onPress={() => router.push({ pathname: '/chat/[id]', params: { id: profile.id } })}
+          />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Button title="Desafiar" icon="flash" variant="soft" onPress={() => setDuelOpen(true)} />
+        </View>
+      </Reveal>
+
+      <CreateDuelModal
+        visible={duelOpen}
+        onClose={() => setDuelOpen(false)}
+        friendId={profile.id}
+        friendName={profile.nickname ?? 'amigo'}
+      />
 
       <Reveal index={1}>
         <Card highlight>
@@ -164,6 +187,7 @@ function Stat({
 
 const styles = StyleSheet.create({
   header: { alignItems: 'center', gap: 4 },
+  actions: { flexDirection: 'row', gap: spacing.sm },
   nickname: { color: colors.text, fontSize: 28, lineHeight: 34, fontFamily: fonts.titleBold, marginTop: spacing.sm },
   muted: { color: colors.textMuted, fontSize: 13, fontFamily: fonts.body },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

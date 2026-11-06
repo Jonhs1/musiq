@@ -1,7 +1,10 @@
 import { Stack } from 'expo-router';
 import { colors } from '../../lib/theme';
+import { useChatRealtime } from '../../features/chat/realtime';
+
 
 export default function AppLayout() {
+  useChatRealtime();
   return (
     <Stack
       screenOptions={{

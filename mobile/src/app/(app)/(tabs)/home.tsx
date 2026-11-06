@@ -11,6 +11,8 @@ import { useAuth } from '../../../lib/auth';
 import { levelProgress, levelTitle } from '../../../lib/level';
 import { syncPendingSessions, usePendingCount } from '../../../lib/pendingSessions';
 import { colors, fonts, radius, spacing } from '../../../lib/theme';
+import { useUnreadTotal } from '../../../features/chat/api';
+import { useIncomingDuelCount } from '../../../features/duels/api';
 
 export default function Home() {
   const router = useRouter();
@@ -20,7 +22,10 @@ export default function Home() {
   const { data: myInstruments } = useMyInstruments();
   const pending = usePendingCount((state) => state.count);
   const { data: requests } = useFriendRequests();
-  const incoming = requests?.filter((item) => item.direction === 'incoming').length ?? 0;
+  const incomingRequests = requests?.filter((item) => item.direction === 'incoming').length ?? 0;
+  const unreadMessages = useUnreadTotal();
+  const incomingDuels = useIncomingDuelCount();
+  const incoming = incomingRequests + unreadMessages + incomingDuels;
 
   const xp = profile?.xp ?? 0;
   const progress = levelProgress(xp);
@@ -36,7 +41,7 @@ export default function Home() {
     Alert.alert(
       'Envio',
       `Na fila desta conta: ${result.attempted}\nEnviadas agora: ${result.synced}\nDe outra conta: ${result.otherUsers}` +
-        (result.lastError ? `\nErro: ${result.lastError}` : ''),
+      (result.lastError ? `\nErro: ${result.lastError}` : ''),
     );
   }
 
