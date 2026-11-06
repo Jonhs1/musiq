@@ -9,9 +9,10 @@ export function Icon({ name, size = 22, color = colors.text }: { name: IconName;
   return <Ionicons name={name} size={size} color={color} />;
 }
 
-/** Ícone do instrumento (bateria, guitarra, baixo, piano) */
+/** Ícone do instrumento (bateria, guitarra, baixo, piano, vocal) */
 export function InstrumentIcon({ id, size = 24, color = colors.primarySoft }: { id: string; size?: number; color?: string }) {
   if (id === 'drums') return <FontAwesome5 name="drum" size={size * 0.9} color={color} />;
+  if (id === 'vocals') return <Ionicons name="mic" size={size} color={color} />;
   const name =
     id === 'guitar' ? 'guitar-electric' : id === 'bass' ? 'music-clef-bass' : id === 'piano' ? 'piano' : 'music-note';
   return <MaterialCommunityIcons name={name} size={size} color={color} />;

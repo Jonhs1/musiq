@@ -28,6 +28,7 @@ export const INSTRUMENT_EMOJI: Record<string, string> = {
   guitar: '🎸',
   bass: '🎸',
   piano: '🎹',
+  vocals: '🎤',
 };
 
 export function useProfile() {

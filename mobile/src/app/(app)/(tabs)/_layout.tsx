@@ -40,13 +40,14 @@ export default function TabsLayout() {
           borderTopWidth: 1,
           paddingTop: 6,
         },
-        tabBarLabelStyle: { fontSize: 11, fontFamily: fonts.bodyMedium },
+        tabBarLabelStyle: { fontSize: 10, fontFamily: fonts.bodyMedium },
         sceneStyle: { backgroundColor: colors.background },
       }}
     >
       <Tabs.Screen name="home" options={{ title: 'Início', tabBarIcon: tabIcon('home', 'home-outline') }} />
       <Tabs.Screen name="plan" options={{ title: 'Plano', tabBarIcon: tabIcon('calendar', 'calendar-outline') }} />
       <Tabs.Screen name="challenges" options={{ title: 'Desafios', tabBarIcon: tabIcon('flag', 'flag-outline') }} />
+      <Tabs.Screen name="community" options={{ title: 'Comunidade', tabBarIcon: tabIcon('people', 'people-outline') }} />
       <Tabs.Screen name="ranking" options={{ title: 'Ranking', tabBarIcon: tabIcon('trophy', 'trophy-outline') }} />
       <Tabs.Screen name="profile" options={{ title: 'Perfil', tabBarIcon: tabIcon('person', 'person-outline') }} />
     </Tabs>

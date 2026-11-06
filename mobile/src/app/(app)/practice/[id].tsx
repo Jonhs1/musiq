@@ -23,7 +23,7 @@ export default function Practice() {
     const router = useRouter();
     const queryClient = useQueryClient();
     const { session } = useAuth();
-    const { data: exercise } = useExercise(id);
+    const { data: exercise, isError: exerciseError } = useExercise(id);
 
     const metronome = useRef<MetronomePanelHandle>(null);
     const metronomeWasRunning = useRef(false);
@@ -156,6 +156,15 @@ export default function Practice() {
         }
     }
 
+    if (exerciseError && !exercise) {
+        return (
+            <Screen>
+                <Text style={styles.exerciseTitle}>Este exercício não está disponível.</Text>
+                <Button title="Voltar" variant="ghost" onPress={() => router.back()} />
+            </Screen>
+        );
+    }
+
     if (!exercise || initialBpm === null) {
         return (
             <Screen>
@@ -186,12 +195,15 @@ export default function Practice() {
                 </View>
             </View>
 
-            <MetronomePanel
-                ref={metronome}
-                initialBpm={initialBpm}
-                onStart={handleMetronomeStart}
-                onBpm={handleBpm}
-            />
+            {/* Exercícios sem BPM (respiração, aquecimento...) não mostram metrônomo */}
+            {exercise.recommended_bpm != null ? (
+                <MetronomePanel
+                    ref={metronome}
+                    initialBpm={initialBpm}
+                    onStart={handleMetronomeStart}
+                    onBpm={handleBpm}
+                />
+            ) : null}
 
             <TextInput
                 value={notes}
