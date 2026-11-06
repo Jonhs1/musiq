@@ -52,6 +52,30 @@ export type FriendProfile = {
     achievements: { achievement_id: string; name: string; unlocked_at: string }[];
 };
 
+export type UserProfile = {
+    id: string;
+    nickname: string | null;
+    avatar_url: string | null;
+    xp: number;
+    level: number;
+    streak_days: number;
+    relation: 'self' | 'friend' | 'none' | 'sent' | 'received';
+    friendship_id: string | null;
+    // privados: só vêm para amigos e para o próprio usuário
+    full_name: string | null;
+    total_practice_seconds: number | null;
+    friends_since: string | null;
+    achievements_count: number;
+    achievements: { achievement_id: string; name: string; unlocked_at: string }[];
+    instruments: {
+        instrument_id: string;
+        name: string;
+        is_primary: boolean;
+        experience_level: 'beginner' | 'intermediate' | 'advanced';
+        xp: number;
+    }[];
+};
+
 // Traduz os erros do servidor para mensagens amigáveis
 export function friendlyError(error: unknown): string {
     const message = error instanceof Error ? error.message : String((error as { message?: string })?.message ?? error);
@@ -140,6 +164,22 @@ export function useFriendProfile(friendId: string | undefined) {
     });
 }
 
+/** Perfil de qualquer usuário (amigo ou não); `relation` diz o que dá para fazer */
+export function useUserProfile(userId: string | undefined) {
+    return useQuery({
+        queryKey: ['user-profile', userId],
+        enabled: !!userId,
+        retry: false,
+        staleTime: 0,
+        refetchOnMount: 'always',
+        queryFn: async () => {
+            const { data, error } = await supabase.rpc('get_user_profile', { p_user_id: userId! });
+            if (error) throw error;
+            return data as UserProfile;
+        },
+    });
+}
+
 function useRefreshFriends() {
     const queryClient = useQueryClient();
     return () => {
@@ -147,6 +187,8 @@ function useRefreshFriends() {
         queryClient.invalidateQueries({ queryKey: ['friend-requests'] });
         queryClient.invalidateQueries({ queryKey: ['search-users'] });
         queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+        queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+        queryClient.invalidateQueries({ queryKey: ['friend-profile'] });
     };
 }
 

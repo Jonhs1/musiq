@@ -184,6 +184,7 @@ function Requests() {
 }
 
 function AddFriend() {
+  const router = useRouter();
   const { data: myCode } = useMyFriendCode();
   const [query, setQuery] = useState('');
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
@@ -262,11 +263,16 @@ function AddFriend() {
       <View style={{ gap: spacing.sm }}>
         {results?.map((user) => (
           <View key={user.user_id} style={styles.row}>
-            <Avatar uri={user.avatar_url} name={user.nickname} size={46} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.name}>{user.nickname}</Text>
-              <Text style={styles.muted}>Nível {user.level}</Text>
-            </View>
+            <Pressable
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.md }}
+              onPress={() => router.push({ pathname: '/friend/[id]', params: { id: user.user_id } })}
+            >
+              <Avatar uri={user.avatar_url} name={user.nickname} size={46} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.name}>{user.nickname}</Text>
+                <Text style={styles.muted}>Nível {user.level}</Text>
+              </View>
+            </Pressable>
             {user.relation === 'none' ? (
               <Pressable style={styles.addButton} onPress={() => send(user.user_id)} hitSlop={6}>
                 <Icon name="person-add" size={16} color={colors.onPrimary} />

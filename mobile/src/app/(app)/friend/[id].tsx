@@ -1,12 +1,18 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 import { Avatar } from '../../../components/Avatar';
 import { BackButton } from '../../../components/BackButton';
 import { Icon, InstrumentTile } from '../../../components/Icon';
 import { Button, Card, ErrorText, ProgressBar, Reveal, Screen, SectionLabel } from '../../../components/ui';
 import { CreateDuelModal } from '../../../features/duels/CreateDuelModal';
-import { friendlyError, useFriendProfile, useRemoveFriendship } from '../../../features/friends/api';
+import {
+  friendlyError,
+  useRemoveFriendship,
+  useRespondRequest,
+  useSendRequest,
+  useUserProfile,
+} from '../../../features/friends/api';
 import { levelProgress, levelTitle } from '../../../lib/level';
 import { colors, fonts, radius, spacing } from '../../../lib/theme';
 
@@ -25,9 +31,16 @@ function formatTotalTime(totalSeconds: number) {
 export default function FriendProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { data: profile, isLoading, isError, error } = useFriendProfile(id);
+  const { data: profile, isLoading, isError, error } = useUserProfile(id);
   const remove = useRemoveFriendship();
+  const send = useSendRequest();
+  const respond = useRespondRequest();
   const [duelOpen, setDuelOpen] = useState(false);
+
+  // o próprio perfil mora na aba Perfil
+  useEffect(() => {
+    if (profile?.relation === 'self') router.replace('/profile');
+  }, [profile?.relation, router]);
 
   if (isLoading) {
     return (
@@ -38,7 +51,8 @@ export default function FriendProfileScreen() {
     );
   }
 
-  if (isError || !profile) {
+  if (isError || !profile || profile.relation === 'self') {
+    if (profile?.relation === 'self') return <Screen><ActivityIndicator color={colors.primarySoft} /></Screen>;
     return (
       <Screen>
         <BackButton />
@@ -79,25 +93,81 @@ export default function FriendProfileScreen() {
         ) : null}
       </Reveal>
 
-      <Reveal index={1} style={styles.actions}>
-        <View style={{ flex: 1 }}>
-          <Button
-            title="Conversar"
-            icon="chatbubble-ellipses"
-            onPress={() => router.push({ pathname: '/chat/[id]', params: { id: profile.id } })}
-          />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Button title="Desafiar" icon="flash" variant="soft" onPress={() => setDuelOpen(true)} />
-        </View>
-      </Reveal>
+      {profile.relation === 'friend' ? (
+        <Reveal index={1} style={styles.actions}>
+          <View style={{ flex: 1 }}>
+            <Button
+              title="Conversar"
+              icon="chatbubble-ellipses"
+              onPress={() => router.push({ pathname: '/chat/[id]', params: { id: profile.id } })}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Button title="Desafiar" icon="flash" variant="soft" onPress={() => setDuelOpen(true)} />
+          </View>
+        </Reveal>
+      ) : null}
 
-      <CreateDuelModal
-        visible={duelOpen}
-        onClose={() => setDuelOpen(false)}
-        friendId={profile.id}
-        friendName={profile.nickname ?? 'amigo'}
-      />
+      {profile.relation === 'none' ? (
+        <Reveal index={1}>
+          <Button
+            title="Adicionar amigo"
+            icon="person-add"
+            onPress={() => send.mutate(profile.id)}
+            loading={send.isPending}
+          />
+        </Reveal>
+      ) : null}
+
+      {profile.relation === 'sent' ? (
+        <Reveal index={1} style={styles.actions}>
+          <View style={{ flex: 1 }}>
+            <Button title="Pedido enviado" variant="soft" disabled onPress={() => undefined} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Button
+              title="Cancelar pedido"
+              variant="ghost"
+              onPress={() => remove.mutate(profile.id)}
+              loading={remove.isPending}
+            />
+          </View>
+        </Reveal>
+      ) : null}
+
+      {profile.relation === 'received' && profile.friendship_id ? (
+        <Reveal index={1} style={styles.actions}>
+          <View style={{ flex: 1 }}>
+            <Button
+              title="Aceitar"
+              icon="checkmark"
+              onPress={() => respond.mutate({ friendshipId: profile.friendship_id!, accept: true })}
+              loading={respond.isPending}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Button
+              title="Recusar"
+              variant="ghost"
+              onPress={() => respond.mutate({ friendshipId: profile.friendship_id!, accept: false })}
+              disabled={respond.isPending}
+            />
+          </View>
+        </Reveal>
+      ) : null}
+
+      {send.isError || remove.isError || respond.isError ? (
+        <ErrorText>{friendlyError(send.error ?? remove.error ?? respond.error)}</ErrorText>
+      ) : null}
+
+      {profile.relation === 'friend' ? (
+        <CreateDuelModal
+          visible={duelOpen}
+          onClose={() => setDuelOpen(false)}
+          friendId={profile.id}
+          friendName={profile.nickname ?? 'amigo'}
+        />
+      ) : null}
 
       <Reveal index={1}>
         <Card highlight>
@@ -115,13 +185,15 @@ export default function FriendProfileScreen() {
 
       <Reveal index={2} style={styles.stats}>
         <Stat icon="flame" color={colors.magenta} value={`${profile.streak_days} dias`} label="Sequência" />
-        <Stat
-          icon="time-outline"
-          color={colors.primarySoft}
-          value={formatTotalTime(profile.total_practice_seconds)}
-          label="Praticado"
-        />
-        <Stat icon="ribbon" color={colors.gold} value={String(profile.achievements.length)} label="Conquistas" />
+        {profile.total_practice_seconds !== null ? (
+          <Stat
+            icon="time-outline"
+            color={colors.primarySoft}
+            value={formatTotalTime(profile.total_practice_seconds)}
+            label="Praticado"
+          />
+        ) : null}
+        <Stat icon="ribbon" color={colors.gold} value={String(profile.achievements_count)} label="Conquistas" />
       </Reveal>
 
       <Reveal index={3}>
@@ -158,9 +230,11 @@ export default function FriendProfileScreen() {
         </>
       ) : null}
 
-      <View style={{ marginTop: spacing.lg }}>
-        <Button title="Desfazer amizade" variant="danger" onPress={confirmRemove} loading={remove.isPending} />
-      </View>
+      {profile.relation === 'friend' ? (
+        <View style={{ marginTop: spacing.lg }}>
+          <Button title="Desfazer amizade" variant="danger" onPress={confirmRemove} loading={remove.isPending} />
+        </View>
+      ) : null}
     </Screen>
   );
 }

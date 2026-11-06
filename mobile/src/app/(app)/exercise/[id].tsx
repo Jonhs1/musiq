@@ -99,10 +99,16 @@ export default function ExerciseDetail() {
 
       {isCommunity ? (
         <Reveal index={0} style={styles.creatorRow}>
-          <Avatar uri={exercise.creator_avatar_url} name={exercise.creator_nickname} size={30} />
-          <Text style={styles.creatorText} numberOfLines={1}>
-            por {mine ? 'você' : (exercise.creator_nickname ?? 'alguém')}
-          </Text>
+          <Pressable
+            style={styles.creatorLink}
+            hitSlop={6}
+            onPress={() => router.push({ pathname: '/friend/[id]', params: { id: exercise.created_by! } })}
+          >
+            <Avatar uri={exercise.creator_avatar_url} name={exercise.creator_nickname} size={30} />
+            <Text style={styles.creatorText} numberOfLines={1}>
+              por {mine ? 'você' : (exercise.creator_nickname ?? 'alguém')}
+            </Text>
+          </Pressable>
           {exercise.visibility !== 'public' ? (
             <View style={styles.badge}>
               <Icon name={exercise.visibility === 'private' ? 'lock-closed' : 'people'} size={12} color={colors.textMuted} />
@@ -218,6 +224,7 @@ function Stat({ label, value, children }: { label: string; value: string; childr
 
 const styles = StyleSheet.create({
   creatorRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  creatorLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexShrink: 1 },
   creatorText: { color: colors.textMuted, fontSize: 14, fontFamily: fonts.bodyMedium, flexShrink: 1 },
   badge: { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 'auto' },
   badgeText: { color: colors.textMuted, fontSize: 12, fontFamily: fonts.bodyMedium },

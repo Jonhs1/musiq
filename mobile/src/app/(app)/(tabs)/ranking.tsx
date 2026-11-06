@@ -169,9 +169,7 @@ export default function Ranking() {
                 onPress={() =>
                   isMe
                     ? router.push('/profile')
-                    : scope === 'friends'
-                      ? router.push({ pathname: '/friend/[id]', params: { id: row.userId } })
-                      : undefined
+                    : router.push({ pathname: '/friend/[id]', params: { id: row.userId } })
                 }
               >
                 {isMe ? (

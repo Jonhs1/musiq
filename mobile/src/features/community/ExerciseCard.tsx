@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Avatar } from '../../components/Avatar';
 import { Dots } from '../../components/Dots';
@@ -17,6 +18,7 @@ export function ExerciseCard({
   onPress: () => void;
 }) {
   const like = useToggleLike();
+  const router = useRouter();
   const liked = exercise.liked_by_me;
 
   return (
@@ -45,12 +47,17 @@ export function ExerciseCard({
       </View>
 
       <View style={styles.bottom}>
-        <View style={styles.creator}>
+        <Pressable
+          style={styles.creator}
+          disabled={!exercise.created_by}
+          hitSlop={6}
+          onPress={() => router.push({ pathname: '/friend/[id]', params: { id: exercise.created_by! } })}
+        >
           <Avatar uri={exercise.creator_avatar_url} name={exercise.creator_nickname} size={24} />
           <Text style={styles.creatorText} numberOfLines={1}>
             {exercise.creator_nickname ?? 'Alguém'}
           </Text>
-        </View>
+        </Pressable>
         <Pressable
           hitSlop={10}
           onPress={() => like.mutate(exercise)}
