@@ -40,9 +40,11 @@ export function GoalCard({
             <Button title="Adicionar ao Hoje" variant="soft" onPress={() => onAddToToday(goal.exercise_id)} />
           </View>
         ) : null}
-        <View style={styles.actionWrap}>
-          <Button title="Arquivar" variant="ghost" onPress={confirmArchive} />
-        </View>
+        {!done ? (
+          <View style={styles.actionWrap}>
+            <Button title="Arquivar" variant="ghost" onPress={confirmArchive} />
+          </View>
+        ) : null}
       </View>
     </Card>
   );
