@@ -19,6 +19,7 @@ import {
   useSendRequest,
   useSendRequestByCode,
 } from '../../features/friends/api';
+import { currentStreak } from '../../lib/level';
 import { colors, fonts, radius, spacing } from '../../lib/theme';
 
 type Tab = 'friends' | 'requests' | 'duels' | 'add';
@@ -79,40 +80,44 @@ function FriendsList({ onAdd }: { onAdd: () => void }) {
 
   return (
     <View style={{ gap: spacing.sm }}>
-      {friends.map((friend, index) => (
-        <Reveal key={friend.user_id} index={index}>
-          <Pressable
-            style={({ pressed }) => [styles.row, pressed && { transform: [{ scale: 0.98 }] }]}
-            onPress={() => router.push({ pathname: '/friend/[id]', params: { id: friend.user_id } })}
-          >
-            <Avatar uri={friend.avatar_url} name={friend.nickname} size={46} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.name}>{friend.nickname}</Text>
-              <Text style={styles.muted}>
-                Nível {friend.level} · {friend.xp} XP
-              </Text>
-            </View>
-            {friend.streak_days > 0 ? (
-              <View style={styles.streak}>
-                <Icon name="flame" size={14} color={colors.magenta} />
-                <Text style={styles.streakText}>{friend.streak_days}</Text>
-              </View>
-            ) : null}
+      {friends.map((friend, index) => {
+        const streak = currentStreak(friend.streak_days, friend.last_practice_date);
+        const unread = unreadByFriend.get(friend.user_id) ?? 0;
+        return (
+          <Reveal key={friend.user_id} index={index}>
             <Pressable
-              onPress={() => router.push({ pathname: '/chat/[id]', params: { id: friend.user_id } })}
-              hitSlop={8}
-              style={styles.chatButton}
+              style={({ pressed }) => [styles.row, pressed && { transform: [{ scale: 0.98 }] }]}
+              onPress={() => router.push({ pathname: '/friend/[id]', params: { id: friend.user_id } })}
             >
-              <Icon name="chatbubble-ellipses" size={20} color={colors.primarySoft} />
-              {(unreadByFriend.get(friend.user_id) ?? 0) > 0 ? (
-                <View style={styles.chatBadge}>
-                  <Text style={styles.chatBadgeText}>{unreadByFriend.get(friend.user_id)}</Text>
+              <Avatar uri={friend.avatar_url} name={friend.nickname} size={46} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.name}>{friend.nickname}</Text>
+                <Text style={styles.muted}>
+                  Nível {friend.level} · {friend.xp} XP
+                </Text>
+              </View>
+              {streak > 0 ? (
+                <View style={styles.streak}>
+                  <Icon name="flame" size={14} color={colors.magenta} />
+                  <Text style={styles.streakText}>{streak}</Text>
                 </View>
               ) : null}
+              <Pressable
+                onPress={() => router.push({ pathname: '/chat/[id]', params: { id: friend.user_id } })}
+                hitSlop={8}
+                style={styles.chatButton}
+              >
+                <Icon name="chatbubble-ellipses" size={20} color={colors.primarySoft} />
+                {unread > 0 ? (
+                  <View style={styles.chatBadge}>
+                    <Text style={styles.chatBadgeText}>{unread}</Text>
+                  </View>
+                ) : null}
+              </Pressable>
             </Pressable>
-          </Pressable>
-        </Reveal>
-      ))}
+          </Reveal>
+        );
+      })}
     </View>
   );
 }

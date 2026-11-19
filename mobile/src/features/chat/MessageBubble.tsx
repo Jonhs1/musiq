@@ -1,5 +1,5 @@
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { ActivityIndicator, Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon } from '../../components/Icon';
 import { colors, fonts, radius } from '../../lib/theme';
@@ -14,7 +14,8 @@ function hourLabel(iso: string) {
   return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
-export function MessageBubble({
+/** Cada balão só é redesenhado quando a própria mensagem muda (lista longa de conversa) */
+export const MessageBubble = memo(function MessageBubble({
   message,
   mine,
   onLongPress,
@@ -64,7 +65,7 @@ export function MessageBubble({
       </Pressable>
     </View>
   );
-}
+});
 
 function ImageContent({ path, onLongPress }: { path: string | null; onLongPress?: () => void }) {
   const { data: url, isLoading } = useMediaUrl(path);

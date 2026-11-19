@@ -120,9 +120,19 @@ export const MetronomePanel = forwardRef<MetronomePanelHandle, Props>(function M
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Aplica mudanças ao vivo enquanto toca
+  // Aplica mudanças ao vivo enquanto toca.
+  // Com o aumento automático ligado, quem manda no BPM do momento é o motor:
+  // mandar o BPM da tela junto (que é só o ponto de partida) derrubava o clique
+  // para o início da subida por um compasso ao mexer em qualquer outro ajuste.
   useEffect(() => {
-    if (running) engine.current?.update(buildConfig());
+    if (!running) return;
+    const config = buildConfig();
+    if (rampEnabled) {
+      const { bpm: _engineOwnsIt, ...rest } = config;
+      engine.current?.update(rest);
+      return;
+    }
+    engine.current?.update(config);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bpm, signature, subdivision, accentFirst, volume, rampEnabled, rampEnd, rampStep, rampEvery, silentEnabled, barsOn, barsOff]);
 

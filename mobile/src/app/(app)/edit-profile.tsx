@@ -166,9 +166,11 @@ export default function EditProfile() {
           return !before || before.experience_level !== item.level;
         });
       if (changedPlan) {
-        supabase
-          .rpc('get_my_weekly_plan', { p_regenerate: true })
-          .then(() => queryClient.invalidateQueries({ queryKey: ['plan'] }));
+        supabase.rpc('get_my_weekly_plan', { p_regenerate: true }).then(
+          () => queryClient.invalidateQueries({ queryKey: ['plan'] }),
+          // sem rede agora: o plano é refeito na próxima vez que a aba abrir
+          (e: unknown) => console.warn('regenerate plan error:', e),
+        );
       }
 
       queryClient.invalidateQueries({ queryKey: ['profile', userId] });

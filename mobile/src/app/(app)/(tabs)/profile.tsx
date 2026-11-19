@@ -6,7 +6,7 @@ import { Button, Card, IconButton, ProgressBar, Reveal, Screen, SectionLabel } f
 import { useAchievements, useUnlockedAchievements } from '../../../features/achievements/api';
 import { unregisterPush } from '../../../features/notifications/usePushNotifications';
 import { useMyInstruments, useProfile } from '../../../features/profile/api';
-import { levelProgress, levelTitle } from '../../../lib/level';
+import { currentStreak, levelProgress, levelTitle } from '../../../lib/level';
 import { supabase } from '../../../lib/supabase';
 import { colors, fonts, radius, spacing } from '../../../lib/theme';
 
@@ -31,6 +31,7 @@ export default function Profile() {
 
   const xp = profile?.xp ?? 0;
   const progress = levelProgress(xp);
+  const streak = currentStreak(profile?.streak_days ?? 0, profile?.last_practice_date);
 
   const unlockedIds = new Set(unlocked?.map((item) => item.achievement_id));
   const preview = (achievements ?? []).filter((item) => unlockedIds.has(item.id)).slice(0, 4);
@@ -63,7 +64,7 @@ export default function Profile() {
       </Reveal>
 
       <Reveal index={2} style={styles.statsRow}>
-        <Stat label="Sequência" value={`${profile?.streak_days ?? 0}`} unit="dias" icon="flame" color={colors.magenta} />
+        <Stat label="Sequência" value={`${streak}`} unit="dias" icon="flame" color={colors.magenta} />
         <Stat label="Praticado" value={formatTotalTime(profile?.total_practice_seconds ?? 0)} icon="time-outline" color={colors.primarySoft} />
         <Stat label="Conquistas" value={String(unlocked?.length ?? 0)} icon="ribbon" color={colors.gold} />
       </Reveal>

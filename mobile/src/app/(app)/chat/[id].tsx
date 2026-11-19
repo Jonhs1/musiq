@@ -7,7 +7,6 @@ import { Avatar } from '../../../components/Avatar';
 import { Icon } from '../../../components/Icon';
 import {
   Message,
-  useConversations,
   useDeleteMessage,
   useMarkRead,
   useMessages,
@@ -30,20 +29,20 @@ export default function ChatScreen() {
   const { data: friends } = useFriends();
   const friend = friends?.find((item) => item.user_id === id);
   const { data: messages, isLoading } = useMessages(id);
-  const { data: conversations } = useConversations();
   const markRead = useMarkRead();
   const sendText = useSendText(id);
   const sendMedia = useSendMedia(id);
   const deleteMessage = useDeleteMessage(id);
 
-  const unread = conversations?.find((item) => item.friend_id === id)?.unread_count ?? 0;
   const newest = messages?.[0]?.id;
 
-  // marca como lida ao abrir e sempre que chegar mensagem nova com a tela aberta
+  // Marca como lida ao abrir e a cada mensagem nova com a tela aberta.
+  // `unread` ficava de fora das dependências de propósito: ele muda por causa
+  // desta própria chamada, e incluí-lo fazia a conversa ser marcada duas vezes.
   useEffect(() => {
-    if (id && (unread > 0 || newest)) markRead(id);
+    if (id && newest) markRead(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, newest, unread]);
+  }, [id, newest]);
 
   // avisa o sistema de push qual conversa está aberta
   useEffect(() => {
@@ -106,6 +105,12 @@ export default function ChatScreen() {
             )}
             contentContainerStyle={{ paddingVertical: 12 }}
             keyboardShouldPersistTaps="handled"
+            // Conversa longa com áudios: sem estes limites a lista monta um
+            // tocador de áudio nativo para cada mensagem bem antes de ela
+            // chegar perto da tela.
+            initialNumToRender={15}
+            maxToRenderPerBatch={10}
+            windowSize={7}
             ListEmptyComponent={
               <View style={[styles.center, { transform: [{ scaleY: -1 }] }]}>
                 <Text style={styles.empty}>Mande a primeira mensagem para {friend?.nickname ?? 'seu amigo'} 🤘</Text>

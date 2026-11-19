@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import * as Crypto from 'expo-crypto';
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 
@@ -68,31 +67,5 @@ export function useExercise(id: string, enabled = true) {
   });
 }
 
-export async function saveSession(input: {
-  userId: string;
-  instrumentId: string;
-  exerciseId: string;
-  startedAt: string;
-  durationSeconds: number;
-  bpmStart: number;
-  bpmMax: number;
-  notes: string;
-}): Promise<number> {
-  const { data, error } = await supabase
-    .from('practice_sessions')
-    .insert({
-      id: Crypto.randomUUID(),
-      user_id: input.userId,
-      instrument_id: input.instrumentId,
-      exercise_id: input.exerciseId,
-      started_at: input.startedAt,
-      duration_seconds: input.durationSeconds,
-      bpm_start: input.bpmStart,
-      bpm_max: input.bpmMax,
-      notes: input.notes.trim() || null,
-    })
-    .select('xp_earned')
-    .single();
-  if (error) throw error;
-  return data.xp_earned as number;
-}
+// Sessões de prática são salvas pela fila offline (lib/pendingSessions.ts), que
+// grava no aparelho antes de enviar. Não há gravação direta por aqui.

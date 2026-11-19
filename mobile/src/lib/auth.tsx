@@ -11,15 +11,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Lê a sessão salva no aparelho (funciona offline)
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
+    let active = true;
+    // Lê a sessão salva no aparelho (funciona offline). Se a leitura falhar,
+    // segue para a tela de login em vez de ficar parado na abertura.
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (active) setSession(data.session);
+      })
+      .catch((e) => console.warn('getSession error:', e))
+      .finally(() => {
+        if (active) setLoading(false);
+      });
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, newSession) => setSession(newSession));
-    return () => subscription.unsubscribe();
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   return <AuthContext.Provider value={{ session, loading }}>{children}</AuthContext.Provider>;

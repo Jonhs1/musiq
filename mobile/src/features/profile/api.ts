@@ -10,6 +10,7 @@ export type Profile = {
   xp: number;
   level: number;
   streak_days: number;
+  last_practice_date: string | null; // 'AAAA-MM-DD' — diz se a sequência ainda vale
   total_practice_seconds: number;
   daily_goal_minutes: number;
 };
@@ -40,7 +41,9 @@ export function useProfile() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, nickname, avatar_url, xp, level, streak_days, total_practice_seconds, daily_goal_minutes')
+        .select(
+          'id, full_name, nickname, avatar_url, xp, level, streak_days, last_practice_date, total_practice_seconds, daily_goal_minutes',
+        )
         .eq('id', userId!)
         .single();
       if (error) throw error;

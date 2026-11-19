@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 
@@ -135,18 +136,36 @@ export function useMyFriendCode() {
     });
 }
 
+/** Espera a pessoa parar de digitar antes de deixar o valor "assentar" */
+function useSettled(value: string, delay = 350) {
+    const [settled, setSettled] = useState(value);
+    useEffect(() => {
+        const timer = setTimeout(() => setSettled(value), delay);
+        return () => clearTimeout(timer);
+    }, [value, delay]);
+    return settled;
+}
+
+/**
+ * Busca por apelido. A consulta só sai depois que a pessoa para de digitar:
+ * antes, cada letra de "Rafael" virava uma ida ao servidor.
+ */
 export function useSearchUsers(query: string) {
     const text = query.trim();
-    return useQuery({
-        queryKey: ['search-users', text],
-        enabled: text.length >= 2,
-        staleTime: 0,
+    const settled = useSettled(text);
+    const result = useQuery({
+        queryKey: ['search-users', settled],
+        enabled: settled.length >= 2,
+        staleTime: 30_000,
         queryFn: async () => {
-            const { data, error } = await supabase.rpc('search_users', { p_query: text });
+            const { data, error } = await supabase.rpc('search_users', { p_query: settled });
             if (error) throw error;
             return data as SearchResult[];
         },
     });
+    // Enquanto o texto ainda não assentou, a tela continua mostrando "buscando"
+    // em vez de piscar "ninguém encontrado" com o resultado da letra anterior.
+    return { ...result, isFetching: result.isFetching || settled !== text };
 }
 
 export function useFriendProfile(friendId: string | undefined) {

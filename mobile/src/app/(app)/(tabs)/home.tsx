@@ -8,7 +8,7 @@ import { TodayPlanCard } from '../../../components/TodayPlanCard';
 import { Card, ProgressBar, Reveal, Screen, SectionLabel } from '../../../components/ui';
 import { useMyInstruments, useProfile } from '../../../features/profile/api';
 import { useAuth } from '../../../lib/auth';
-import { levelProgress, levelTitle } from '../../../lib/level';
+import { currentStreak, levelProgress, levelTitle } from '../../../lib/level';
 import { syncPendingSessions, usePendingCount } from '../../../lib/pendingSessions';
 import { colors, fonts, radius, spacing } from '../../../lib/theme';
 import { useUnreadTotal } from '../../../features/chat/api';
@@ -30,6 +30,7 @@ export default function Home() {
   const xp = profile?.xp ?? 0;
   const progress = levelProgress(xp);
   const totalMinutes = Math.floor((profile?.total_practice_seconds ?? 0) / 60);
+  const streak = currentStreak(profile?.streak_days ?? 0, profile?.last_practice_date);
 
   async function retryNow() {
     if (!session) return;
@@ -93,7 +94,7 @@ export default function Home() {
           </View>
           <ProgressBar ratio={progress.ratio} />
           <View style={styles.stats}>
-            <Stat icon="flame" color={colors.magenta} value={`${profile?.streak_days ?? 0}`} label="dias seguidos" />
+            <Stat icon="flame" color={colors.magenta} value={`${streak}`} label="dias seguidos" />
             <View style={styles.divider} />
             <Stat icon="time-outline" color={colors.primarySoft} value={`${totalMinutes}`} label="min praticados" />
           </View>

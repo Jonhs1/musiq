@@ -29,11 +29,27 @@ export function Composer({ onSendText, onSendImage, onSendAudio, busy }: Props) 
   const startedAt = useRef(0);
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
 
+  const recorderRef = useRef(recorder);
+  recorderRef.current = recorder;
+  const recordingRef = useRef(false);
+  recordingRef.current = recording;
+
   useEffect(() => {
     if (!recording) return;
     const timer = setInterval(() => setElapsed(Date.now() - startedAt.current), 200);
     return () => clearInterval(timer);
   }, [recording]);
+
+  // Sair da conversa no meio de uma gravação deixava o microfone ligado e o
+  // áudio preso no modo de gravação — o que deixa o metrônomo e os áudios do
+  // chat baixos até reabrir o app. Ao sair da tela, desliga tudo.
+  useEffect(() => {
+    return () => {
+      if (!recordingRef.current) return;
+      Promise.resolve(recorderRef.current.stop()).catch(() => {});
+      setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => {});
+    };
+  }, []);
 
   function sendText() {
     const value = text.trim();

@@ -190,7 +190,7 @@ export default function Practice() {
                 <View style={[styles.status, !running && styles.statusPaused]}>
                     <View style={[styles.statusDot, !running && { backgroundColor: colors.textDim }]} />
                     <Text style={[styles.statusText, !running && { color: colors.textMuted }]}>
-                        {running ? 'Praticando' : 'Pausado'} · XP a cada 10 min completos
+                        {running ? 'Praticando' : 'Pausado'} · 1 XP a cada 30 segundos
                     </Text>
                 </View>
             </View>
