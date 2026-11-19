@@ -1,15 +1,13 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppState, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Icon } from '../../components/Icon';
 import { colors, fonts, radius, spacing } from '../../lib/theme';
 import { BeatEvent, Metronome, MetronomeConfig, MetronomeHandle, Subdivision } from './Metronome';
 
-const SIGNATURES: Record<string, { beats: number; unit: 4 | 8 }> = {
-  '4/4': { beats: 4, unit: 4 },
-  '3/4': { beats: 3, unit: 4 },
-  '2/4': { beats: 2, unit: 4 },
-  '6/8': { beats: 6, unit: 8 },
-};
+// Compasso livre: o usuário escolhe quantos tempos (1 a 12) e se a unidade é 4 ou 8.
+const MIN_BEATS = 1;
+const MAX_BEATS = 12;
+const UNITS: (4 | 8)[] = [4, 8];
 
 const SUBDIVISIONS: { key: Subdivision; label: string }[] = [
   { key: 'none', label: 'Nenhuma' },
@@ -41,7 +39,9 @@ export const MetronomePanel = forwardRef<MetronomePanelHandle, Props>(function M
 
   const [running, setRunning] = useState(false);
   const [bpm, setBpm] = useState(Math.min(MAX_BPM, Math.max(MIN_BPM, initialBpm)));
-  const [signature, setSignature] = useState('4/4');
+  const [beats, setBeats] = useState(4);
+  const [unit, setUnit] = useState<4 | 8>(4);
+  const [beatsText, setBeatsText] = useState('4');
   const [subdivision, setSubdivision] = useState<Subdivision>('none');
   const [accentFirst, setAccentFirst] = useState(true);
   const [countInBars, setCountInBars] = useState(0);
@@ -59,7 +59,6 @@ export const MetronomePanel = forwardRef<MetronomePanelHandle, Props>(function M
   const [beat, setBeat] = useState<BeatEvent | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const { beats, unit } = SIGNATURES[signature];
   runningRef.current = running;
 
   function buildConfig(): MetronomeConfig {
@@ -134,12 +133,26 @@ export const MetronomePanel = forwardRef<MetronomePanelHandle, Props>(function M
     }
     engine.current?.update(config);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bpm, signature, subdivision, accentFirst, volume, rampEnabled, rampEnd, rampStep, rampEvery, silentEnabled, barsOn, barsOff]);
+  }, [bpm, beats, unit, subdivision, accentFirst, volume, rampEnabled, rampEnd, rampStep, rampEvery, silentEnabled, barsOn, barsOff]);
 
   function changeBpm(delta: number) {
     const next = Math.min(MAX_BPM, Math.max(MIN_BPM, bpm + delta));
     setBpm(next);
     report(next);
+  }
+
+  function applyBeats(next: number) {
+    const value = Math.min(MAX_BEATS, Math.max(MIN_BEATS, next));
+    setBeats(value);
+    setBeatsText(String(value));
+  }
+
+  function onBeatsTyped(text: string) {
+    const digits = text.replace(/[^0-9]/g, '').slice(0, 2);
+    setBeatsText(digits);
+    const n = Number(digits);
+    // Só aplica quando o número já é válido; campo vazio ou 0 espera o usuário terminar de digitar
+    if (digits !== '' && n >= MIN_BEATS && n <= MAX_BEATS) setBeats(n);
   }
 
   function toggle() {
@@ -184,7 +197,7 @@ export const MetronomePanel = forwardRef<MetronomePanelHandle, Props>(function M
         <RoundButton label="−1" onPress={() => changeBpm(-1)} />
         <View style={styles.bpmCenter}>
           <Text style={styles.bpmValue}>{shownBpm}</Text>
-          <Text style={styles.bpmUnit}>BPM · {signature}</Text>
+          <Text style={styles.bpmUnit}>BPM · {beats}/{unit}</Text>
         </View>
         <RoundButton label="+1" onPress={() => changeBpm(1)} />
         <RoundButton label="+5" onPress={() => changeBpm(5)} />
@@ -198,7 +211,9 @@ export const MetronomePanel = forwardRef<MetronomePanelHandle, Props>(function M
               key={index}
               style={[
                 styles.dot,
+                beats > 8 && styles.dotSmall,
                 active && styles.dotActive,
+                active && beats > 8 && styles.dotActiveSmall,
                 active && beat?.countIn && styles.dotCountIn,
                 active && beat && !beat.audible && styles.dotSilent,
               ]}
@@ -225,12 +240,33 @@ export const MetronomePanel = forwardRef<MetronomePanelHandle, Props>(function M
       </Pressable>
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <Text style={styles.section}>Compasso</Text>
-      <Chips
-        options={Object.keys(SIGNATURES).map((key) => ({ key, label: key }))}
-        value={signature}
-        onChange={setSignature}
-      />
+      <Text style={styles.section}>Compasso (toque no número para digitar)</Text>
+      <View style={styles.signatureRow}>
+        <View style={styles.stepperControls}>
+          <RoundButton label="−" onPress={() => applyBeats(beats - 1)} />
+          <TextInput
+            value={beatsText}
+            onChangeText={onBeatsTyped}
+            onBlur={() => applyBeats(beats)}
+            keyboardType="number-pad"
+            maxLength={2}
+            selectTextOnFocus
+            style={styles.beatsInput}
+            accessibilityLabel="Tempos por compasso"
+          />
+          <RoundButton label="+" onPress={() => applyBeats(beats + 1)} />
+          <Text style={styles.slash}>/</Text>
+          {UNITS.map((value) => (
+            <Pressable
+              key={value}
+              onPress={() => setUnit(value)}
+              style={[styles.chip, unit === value && styles.chipActive]}
+            >
+              <Text style={[styles.chipText, unit === value && styles.chipTextActive]}>{value}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
 
       <Text style={styles.section}>Subdivisão</Text>
       <Chips options={SUBDIVISIONS} value={subdivision} onChange={(key) => setSubdivision(key as Subdivision)} />
@@ -381,7 +417,7 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   bpmUnit: { color: colors.textMuted, fontSize: 12, fontFamily: fonts.body },
-  dots: { flexDirection: 'row', gap: 14, justifyContent: 'center', alignItems: 'center', height: 30 },
+  dots: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center', alignItems: 'center', height: 30 },
   dot: { width: 16, height: 16, borderRadius: 8, backgroundColor: colors.border },
   dotActive: {
     width: 24,
@@ -394,6 +430,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
     elevation: 6,
   },
+  dotSmall: { width: 12, height: 12, borderRadius: 6 },
+  dotActiveSmall: { width: 18, height: 18, borderRadius: 9 },
   dotCountIn: { backgroundColor: colors.gold, shadowColor: colors.gold },
   dotSilent: { backgroundColor: colors.textDim, shadowOpacity: 0 },
   hint: { color: colors.textMuted, fontSize: 12, textAlign: 'center', fontFamily: fonts.body },
@@ -464,5 +502,19 @@ const styles = StyleSheet.create({
   switchTrackOn: { backgroundColor: colors.primary },
   switchThumb: { width: 20, height: 20, borderRadius: 10, backgroundColor: colors.textMuted },
   switchThumbOn: { backgroundColor: '#fff', alignSelf: 'flex-end' },
+  signatureRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  beatsInput: {
+    minWidth: 52,
+    height: 46,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    color: colors.text,
+    fontSize: 20,
+    fontFamily: fonts.title,
+    textAlign: 'center',
+    paddingVertical: 0,
+  },
+  slash: { color: colors.textMuted, fontSize: 22, fontFamily: fonts.title, marginHorizontal: 2 },
   groupHint: { color: colors.textMuted, fontSize: 12, fontFamily: fonts.body },
 });
