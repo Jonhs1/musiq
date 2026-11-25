@@ -27,10 +27,14 @@ type Props = {
   onStart?: (bpm: number) => void;
   /** Chamado sempre que o BPM efetivo muda (botões ou aumento automático) */
   onBpm?: (bpm: number) => void;
+  /** Compasso inicial (ex.: exercício importado). Só pré-preenche; o usuário muda depois. */
+  initialSignature?: { beats: number; unit: 4 | 8 };
+  /** Passo e intervalo iniciais da rampa. Não liga a rampa (rampEnabled continua falso). */
+  rampPreset?: { step: number; everySeconds: number };
 };
 
 export const MetronomePanel = forwardRef<MetronomePanelHandle, Props>(function MetronomePanel(
-  { initialBpm, onStart, onBpm },
+  { initialBpm, onStart, onBpm, initialSignature, rampPreset },
   ref,
 ) {
   const engine = useRef<MetronomeHandle>(null);
@@ -39,9 +43,9 @@ export const MetronomePanel = forwardRef<MetronomePanelHandle, Props>(function M
 
   const [running, setRunning] = useState(false);
   const [bpm, setBpm] = useState(Math.min(MAX_BPM, Math.max(MIN_BPM, initialBpm)));
-  const [beats, setBeats] = useState(4);
-  const [unit, setUnit] = useState<4 | 8>(4);
-  const [beatsText, setBeatsText] = useState('4');
+  const [beats, setBeats] = useState(initialSignature?.beats ?? 4);
+  const [unit, setUnit] = useState<4 | 8>(initialSignature?.unit ?? 4);
+  const [beatsText, setBeatsText] = useState(String(initialSignature?.beats ?? 4));
   const [subdivision, setSubdivision] = useState<Subdivision>('none');
   const [accentFirst, setAccentFirst] = useState(true);
   const [countInBars, setCountInBars] = useState(0);
@@ -50,8 +54,8 @@ export const MetronomePanel = forwardRef<MetronomePanelHandle, Props>(function M
   const [advanced, setAdvanced] = useState(false);
   const [rampEnabled, setRampEnabled] = useState(false);
   const [rampEnd, setRampEnd] = useState(Math.min(MAX_BPM, initialBpm + 20));
-  const [rampStep, setRampStep] = useState(5);
-  const [rampEvery, setRampEvery] = useState(30);
+  const [rampStep, setRampStep] = useState(rampPreset?.step ?? 5);
+  const [rampEvery, setRampEvery] = useState(rampPreset?.everySeconds ?? 30);
   const [silentEnabled, setSilentEnabled] = useState(false);
   const [barsOn, setBarsOn] = useState(4);
   const [barsOff, setBarsOff] = useState(4);

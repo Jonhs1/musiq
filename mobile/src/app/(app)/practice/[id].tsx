@@ -6,8 +6,9 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Celebration } from '../../../components/Celebration';
 import { Button, ErrorText, IconButton, Screen } from '../../../components/ui';
-import { useExercise } from '../../../features/exercises/api';
+import { useExercise, useExerciseProgression } from '../../../features/exercises/api';
 import { MetronomePanel, MetronomePanelHandle } from '../../../features/metronome/MetronomePanel';
+import { parseSignature } from '../../../features/metronome/preset';
 import { useAuth } from '../../../lib/auth';
 import { formatDuration } from '../../../lib/format';
 import { enqueueSession, syncPendingSessions } from '../../../lib/pendingSessions';
@@ -24,6 +25,12 @@ export default function Practice() {
     const queryClient = useQueryClient();
     const { session } = useAuth();
     const { data: exercise, isError: exerciseError } = useExercise(id);
+    const { data: progression, isLoading: progressionLoading } = useExerciseProgression(id);
+    const signature = parseSignature(progression?.time_signature ?? null);
+    const rampPreset =
+        progression?.progress_step_bpm && progression?.progress_every_seconds
+            ? { step: progression.progress_step_bpm, everySeconds: progression.progress_every_seconds }
+            : undefined;
 
     const metronome = useRef<MetronomePanelHandle>(null);
     const metronomeWasRunning = useRef(false);
@@ -165,7 +172,7 @@ export default function Practice() {
         );
     }
 
-    if (!exercise || initialBpm === null) {
+    if (!exercise || initialBpm === null || progressionLoading) {
         return (
             <Screen>
                 <ActivityIndicator color={colors.primarySoft} />
@@ -202,6 +209,8 @@ export default function Practice() {
                     initialBpm={initialBpm}
                     onStart={handleMetronomeStart}
                     onBpm={handleBpm}
+                    initialSignature={signature ?? undefined}
+                    rampPreset={rampPreset}
                 />
             ) : null}
 

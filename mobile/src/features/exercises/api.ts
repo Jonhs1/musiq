@@ -69,3 +69,21 @@ export function useExercise(id: string, enabled = true) {
 
 // Sessões de prática são salvas pela fila offline (lib/pendingSessions.ts), que
 // grava no aparelho antes de enviar. Não há gravação direta por aqui.
+/** Compasso e progressão de um exercício importado (campos fora da RPC get_exercise). */
+export function useExerciseProgression(id: string) {
+  const { session } = useAuth();
+  const userId = session?.user.id;
+  return useQuery({
+    queryKey: ['exercise-progression', userId, id],
+    enabled: !!userId && !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('exercises')
+        .select('time_signature, progress_step_bpm, progress_every_seconds')
+        .eq('id', id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { time_signature: string | null; progress_step_bpm: number | null; progress_every_seconds: number | null } | null;
+    },
+  });
+}
