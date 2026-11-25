@@ -1,165 +1,179 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Icon, InstrumentTile } from '../../../components/Icon';
-import { Button, Card, ErrorText, IconButton, Reveal, Screen, Subtitle, Title } from '../../../components/ui';
-import {
-  localDateKey,
-  PlanItem,
-  usePlan,
-  useRegeneratePlan,
-  WEEKDAY_NAMES,
-  weekDayKeys,
-} from '../../../features/plan/api';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Button, Card, ErrorText, Reveal, Screen, SectionLabel, Subtitle, Title } from '../../../components/ui';
+import { localDateKey, usePlan } from '../../../features/plan/api';
 import { useProfile } from '../../../features/profile/api';
-import { colors, fonts, radius, spacing } from '../../../lib/theme';
+import { ExercisePicker } from '../../../features/training/ExercisePicker';
+import { GoalCard } from '../../../features/training/GoalCard';
+import { TodayList } from '../../../features/training/TodayList';
+import {
+  friendlyError,
+  useAddToToday,
+  useArchiveGoal,
+  useRemoveFromToday,
+  useReplaceTodayItem,
+  useTrainingGoals,
+} from '../../../features/training/api';
+import type { Exercise } from '../../../features/exercises/api';
+import { colors, fonts, spacing } from '../../../lib/theme';
 
-export default function Plan() {
+type Picker = { mode: 'add' } | { mode: 'replace'; itemId: string; currentExerciseId: string } | null;
+
+// Aba "Treino": o que praticar hoje (editável) e as metas com progresso.
+export default function Training() {
   const router = useRouter();
   const { data: profile } = useProfile();
-  const { data: items, isLoading, isError, refetch } = usePlan();
-  const regenerate = useRegeneratePlan();
-  const [goal, setGoal] = useState<number | null>(null);
+  const plan = usePlan();
+  const goals = useTrainingGoals();
+  const addToday = useAddToToday();
+  const removeToday = useRemoveFromToday();
+  const replaceToday = useReplaceTodayItem();
+  const archive = useArchiveGoal();
+  const [picker, setPicker] = useState<Picker>(null);
+  const [showDone, setShowDone] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
-      refetch();
-    }, [refetch]),
+      plan.refetch();
+      goals.refetch();
+    }, [plan.refetch, goals.refetch]),
   );
 
-  const savedGoal = profile?.daily_goal_minutes ?? 20;
-  const currentGoal = goal ?? savedGoal;
-  const goalChanged = currentGoal !== savedGoal;
-
-  const days = weekDayKeys();
   const today = localDateKey(new Date());
+  const items = plan.data ?? [];
+  const todays = items.filter((item) => item.day_date === today);
+  const todayMinutes = todays.reduce((sum, item) => sum + (item.minutes ?? 0), 0);
+  const dailyGoal = profile?.daily_goal_minutes ?? 20;
+  const todayExerciseIds = todays.map((item) => item.exercise_id);
 
-  function openExercise(item: PlanItem) {
-    router.push({ pathname: '/exercise/[id]', params: { id: item.exercise_id } });
+  const allGoals = goals.data ?? [];
+  const activeGoals = allGoals.filter((goal) => goal.status === 'active');
+  const doneGoals = allGoals.filter((goal) => goal.status === 'done');
+
+  const mutationFailed = [addToday, removeToday, replaceToday, archive].find((mutation) => mutation.isError);
+
+  function closePicker() {
+    setPicker(null);
   }
+
+  function onPickExercise(exercise: Exercise) {
+    if (!picker) return;
+    if (picker.mode === 'add') {
+      addToday.mutate(exercise.id, { onSuccess: closePicker });
+    } else {
+      replaceToday.mutate({ itemId: picker.itemId, exerciseId: exercise.id }, { onSuccess: closePicker });
+    }
+  }
+
+  // Ao trocar, o próprio exercício do item pode ficar disponível de novo
+  const excludeIds =
+    picker?.mode === 'replace'
+      ? todayExerciseIds.filter((id) => id !== picker.currentExerciseId)
+      : todayExerciseIds;
 
   return (
     <Screen>
       <Reveal index={0}>
-        <Title>Plano da semana</Title>
-        <Subtitle>
-          Sugestão baseada no seu nível, na sua meta e nos instrumentos que você anda deixando de lado.
-        </Subtitle>
+        <Title>Treino</Title>
+        <Subtitle>O que praticar hoje e quanto falta para as suas metas.</Subtitle>
       </Reveal>
 
       <Reveal index={1}>
         <Card>
-          <View style={styles.goalRow}>
-            <View>
-              <Text style={styles.goalLabel}>Meta diária</Text>
-              <Text style={styles.goalValue}>{currentGoal} min</Text>
-            </View>
-            <View style={styles.goalControls}>
-              <IconButton name="remove" onPress={() => setGoal(Math.max(5, currentGoal - 5))} />
-              <IconButton name="add" onPress={() => setGoal(Math.min(180, currentGoal + 5))} />
-            </View>
+          <View style={styles.sectionHeader}>
+            <SectionLabel>Hoje</SectionLabel>
+            <Text style={styles.dayMeta}>
+              {todayMinutes} de {dailyGoal} min
+            </Text>
           </View>
-          <Button
-            title={goalChanged ? 'Aplicar meta e refazer o plano' : 'Refazer o plano de hoje em diante'}
-            variant={goalChanged ? 'primary' : 'ghost'}
-            loading={regenerate.isPending}
-            onPress={() => regenerate.mutate(currentGoal)}
-          />
-          {regenerate.isError ? (
-            <ErrorText>Não foi possível refazer o plano. Verifique a conexão.</ErrorText>
+          {plan.isLoading ? <ActivityIndicator color={colors.primarySoft} /> : null}
+          {plan.isError ? <ErrorText>Não foi possível carregar o plano.</ErrorText> : null}
+          {plan.data ? (
+            <TodayList
+              items={items}
+              onAdd={() => setPicker({ mode: 'add' })}
+              onReplace={(itemId) => {
+                const current = items.find((item) => item.item_id === itemId);
+                setPicker({ mode: 'replace', itemId, currentExerciseId: current?.exercise_id ?? '' });
+              }}
+              onRemove={(itemId) => removeToday.mutate(itemId)}
+            />
           ) : null}
+          <Pressable onPress={() => router.push('/plan-week')} hitSlop={8}>
+            <Text style={styles.link}>Ver semana</Text>
+          </Pressable>
         </Card>
       </Reveal>
 
-      {isLoading ? <ActivityIndicator color={colors.primarySoft} /> : null}
-      {isError ? <ErrorText>Não foi possível carregar o plano.</ErrorText> : null}
+      <Reveal index={2}>
+        <View style={styles.sectionHeader}>
+          <SectionLabel>Metas</SectionLabel>
+          <Button title="Nova meta" variant="soft" icon="add" onPress={() => router.push('/goal-form')} />
+        </View>
 
-      {items
-        ? days.map((key, index) => {
-            const dayItems = items.filter((item) => item.day_date === key);
-            const isToday = key === today;
-            const isRest = index === 6;
-            const doneCount = dayItems.filter((item) => item.done).length;
-            const totalMinutes = dayItems.reduce((sum, item) => sum + (item.minutes ?? 0), 0);
+        {goals.isLoading ? <ActivityIndicator color={colors.primarySoft} /> : null}
+        {goals.isError ? <ErrorText>Não foi possível carregar as metas.</ErrorText> : null}
 
-            return (
-              <Reveal key={key} index={2 + index}>
-                <Card highlight={isToday}>
-                  <View style={styles.dayHeader}>
-                    <View style={styles.dayTitleRow}>
-                      <Text style={[styles.dayName, isToday && { color: colors.primarySoft }]}>
-                        {WEEKDAY_NAMES[index]}
-                      </Text>
-                      {isToday ? (
-                        <View style={styles.todayTag}>
-                          <Text style={styles.todayTagText}>Hoje</Text>
-                        </View>
-                      ) : null}
-                    </View>
-                    {dayItems.length > 0 ? (
-                      <Text style={styles.dayMeta}>
-                        {doneCount}/{dayItems.length} feitos · {totalMinutes} min
-                      </Text>
-                    ) : null}
-                  </View>
+        {!goals.isLoading && !goals.isError && activeGoals.length === 0 && doneGoals.length === 0 ? (
+          <Card>
+            <Text style={styles.explain}>
+              Meta mostra a sua evolução. Escolha um exercício com BPM, um valor inicial e um alvo: a barra sobe
+              conforme você pratica. Ou defina quantos dias por semana quer praticar.
+            </Text>
+          </Card>
+        ) : null}
 
-                  {dayItems.length === 0 ? (
-                    <View style={styles.emptyRow}>
-                      {isRest ? <Icon name="moon" size={16} color={colors.textDim} /> : null}
-                      <Text style={styles.empty}>{isRest ? 'Dia de descanso' : 'Sem treino planejado'}</Text>
-                    </View>
-                  ) : (
-                    dayItems.map((item) => (
-                      <Pressable
-                        key={item.item_id}
-                        style={({ pressed }) => [styles.item, pressed && { opacity: 0.7 }]}
-                        onPress={() => openExercise(item)}
-                      >
-                        <InstrumentTile id={item.instrument_id} size={40} />
-                        <View style={{ flex: 1 }}>
-                          <Text style={[styles.itemTitle, item.done && styles.itemTitleDone]}>{item.title}</Text>
-                          <Text style={styles.itemMeta}>
-                            {item.minutes ?? '—'} min · nível {item.difficulty}
-                            {item.recommended_bpm ? ` · ${item.recommended_bpm} BPM` : ''}
-                          </Text>
-                        </View>
-                        <Icon
-                          name={item.done ? 'checkmark-circle' : 'ellipse-outline'}
-                          size={24}
-                          color={item.done ? colors.green : colors.borderStrong}
-                        />
-                      </Pressable>
-                    ))
-                  )}
-                </Card>
-              </Reveal>
-            );
-          })
-        : null}
+        {activeGoals.map((goal) => (
+          <GoalCard
+            key={goal.goal_id}
+            goal={goal}
+            onAddToToday={(exerciseId) => addToday.mutate(exerciseId)}
+            onArchive={(goalId) => archive.mutate(goalId)}
+          />
+        ))}
+
+        {doneGoals.length > 0 ? (
+          <>
+            <Pressable onPress={() => setShowDone((value) => !value)} hitSlop={8}>
+              <Text style={styles.link}>
+                {showDone ? 'Ocultar concluídas' : `Concluídas (${doneGoals.length})`}
+              </Text>
+            </Pressable>
+            {showDone
+              ? doneGoals.map((goal) => (
+                  <GoalCard
+                    key={goal.goal_id}
+                    goal={goal}
+                    onAddToToday={(exerciseId) => addToday.mutate(exerciseId)}
+                    onArchive={(goalId) => archive.mutate(goalId)}
+                  />
+                ))
+              : null}
+          </>
+        ) : null}
+      </Reveal>
+
+      {mutationFailed ? <ErrorText>{friendlyError(mutationFailed.error)}</ErrorText> : null}
+
+      <Modal visible={picker !== null} animationType="slide" onRequestClose={closePicker}>
+        <Screen>
+          <Title>{picker?.mode === 'replace' ? 'Trocar exercício' : 'Adicionar ao Hoje'}</Title>
+          <Subtitle>Escolha um exercício. Ele entra no dia de hoje.</Subtitle>
+          <ExercisePicker onPick={onPickExercise} excludeIds={excludeIds} />
+          {addToday.isPending || replaceToday.isPending ? (
+            <ActivityIndicator color={colors.primarySoft} />
+          ) : null}
+          <Button title="Fechar" variant="ghost" onPress={closePicker} />
+        </Screen>
+      </Modal>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  goalRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  goalLabel: { color: colors.textMuted, fontSize: 13, fontFamily: fonts.body },
-  goalValue: { color: colors.text, fontSize: 28, lineHeight: 34, fontFamily: fonts.titleBold },
-  goalControls: { flexDirection: 'row', gap: spacing.sm },
-  dayHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  dayTitleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  dayName: { color: colors.text, fontSize: 17, fontFamily: fonts.title },
-  todayTag: {
-    paddingVertical: 2,
-    paddingHorizontal: 8,
-    borderRadius: radius.pill,
-    backgroundColor: colors.primaryTint,
-  },
-  todayTagText: { color: colors.primarySoft, fontSize: 11, fontFamily: fonts.bodySemi },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
   dayMeta: { color: colors.textMuted, fontSize: 12, fontFamily: fonts.body },
-  emptyRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  empty: { color: colors.textDim, fontSize: 14, fontFamily: fonts.body },
-  item: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: 4 },
-  itemTitle: { color: colors.text, fontSize: 15, fontFamily: fonts.bodySemi },
-  itemTitleDone: { color: colors.textDim, textDecorationLine: 'line-through' },
-  itemMeta: { color: colors.textMuted, fontSize: 12, fontFamily: fonts.body },
+  link: { color: colors.primarySoft, fontSize: 14, fontFamily: fonts.bodySemi, paddingVertical: 4 },
+  explain: { color: colors.textMuted, fontSize: 14, lineHeight: 20, fontFamily: fonts.body },
 });

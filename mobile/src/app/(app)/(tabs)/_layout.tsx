@@ -45,7 +45,7 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen name="home" options={{ title: 'Início', tabBarIcon: tabIcon('home', 'home-outline') }} />
-      <Tabs.Screen name="plan" options={{ title: 'Plano', tabBarIcon: tabIcon('calendar', 'calendar-outline') }} />
+      <Tabs.Screen name="plan" options={{ title: 'Treino', tabBarIcon: tabIcon('barbell', 'barbell-outline') }} />
       <Tabs.Screen name="challenges" options={{ title: 'Desafios', tabBarIcon: tabIcon('flag', 'flag-outline') }} />
       <Tabs.Screen name="community" options={{ title: 'Comunidade', tabBarIcon: tabIcon('people', 'people-outline') }} />
       <Tabs.Screen name="ranking" options={{ title: 'Ranking', tabBarIcon: tabIcon('trophy', 'trophy-outline') }} />
