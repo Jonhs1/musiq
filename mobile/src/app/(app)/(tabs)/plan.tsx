@@ -16,6 +16,8 @@ import {
   useTrainingGoals,
 } from '../../../features/training/api';
 import type { Exercise } from '../../../features/exercises/api';
+import { MaterialCard } from '../../../features/materials/MaterialCard';
+import { useMaterials } from '../../../features/materials/api';
 import { colors, fonts, spacing } from '../../../lib/theme';
 
 type Picker = { mode: 'add' } | { mode: 'replace'; itemId: string; currentExerciseId: string } | null;
@@ -30,6 +32,7 @@ export default function Training() {
   const removeToday = useRemoveFromToday();
   const replaceToday = useReplaceTodayItem();
   const archive = useArchiveGoal();
+  const materials = useMaterials();
   const [picker, setPicker] = useState<Picker>(null);
   const [showDone, setShowDone] = useState(false);
 
@@ -152,6 +155,22 @@ export default function Training() {
               : null}
           </>
         ) : null}
+      </Reveal>
+
+      <Reveal index={3}>
+        <View style={styles.sectionHeader}>
+          <SectionLabel>Meus materiais</SectionLabel>
+          <Button title="Importar material" variant="soft" icon="add" onPress={() => router.push('/material-import')} />
+        </View>
+        {materials.isError ? <ErrorText>Não foi possível carregar os materiais.</ErrorText> : null}
+        {materials.data && materials.data.length === 0 ? (
+          <Card>
+            <Text style={styles.explain}>Importe a apostila de um curso e transforme os exercícios em metas e rotina.</Text>
+          </Card>
+        ) : null}
+        {(materials.data ?? []).map((m) => (
+          <MaterialCard key={m.id} material={m} onPress={() => router.push({ pathname: '/material/[id]', params: { id: m.id } })} />
+        ))}
       </Reveal>
 
       {mutationFailed ? <ErrorText>{friendlyError(mutationFailed.error)}</ErrorText> : null}
