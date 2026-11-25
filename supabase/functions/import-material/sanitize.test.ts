@@ -86,3 +86,12 @@ Deno.test('checkFiles: PDF válido e até 6 imagens são aceitos', () => {
   assert.equal(checkFiles([{ mime: 'application/pdf', data: 'QUJD' }]).ok, true);
   assert.equal(checkFiles(Array(6).fill({ mime: 'image/jpeg', data: 'QUJD' })).ok, true);
 });
+
+Deno.test('fixture real da apostila passa pelo validador sem perder itens', async () => {
+  const raw = JSON.parse(await Deno.readTextFile(new URL('./fixtures/importacao-apostila-pedal-duplo.json', import.meta.url)));
+  const r = sanitizeImport(raw);
+  assert.equal(r.exercicios.length, 8);
+  assert.equal(r.regras_gerais[5].passo_bpm, 5);
+  assert.equal(r.rotina?.ordem.length, 4);
+  assert.equal(r.material.instrumento, 'drums');
+});

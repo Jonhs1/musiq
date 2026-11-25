@@ -1,0 +1,27 @@
+{
+  "material": { "titulo": "Primeiros passos", "instrumento": "drums", "nivel": "Nível Iniciante" },
+  "regras_gerais": [
+    { "texto": "Ajuste o banco para que os pés alcancem os pedais sem tensão excessiva.", "passo_bpm": null, "a_cada_segundos": null },
+    { "texto": "Mantenha o tronco estável, os ombros relaxados e os movimentos controlados.", "passo_bpm": null, "a_cada_segundos": null },
+    { "texto": "Experimente tocar com o calcanhar elevado ou apoiado, sem forçar a articulação.", "passo_bpm": null, "a_cada_segundos": null },
+    { "texto": "Busque golpes com volume semelhante no pé direito e no esquerdo.", "passo_bpm": null, "a_cada_segundos": null },
+    { "texto": "Comece em 60 BPM, em compasso 4/4. Toque uma nota por pulso (semínimas), duas por pulso (colcheias) e, por último, quatro por pulso (semicolcheias). Conte em voz alta para manter a subdivisão.", "passo_bpm": null, "a_cada_segundos": null },
+    { "texto": "Aumente 5 BPM somente quando conseguir tocar por 30 segundos com regularidade e sem tensão. Se perder o controle, reduza o andamento.", "passo_bpm": 5, "a_cada_segundos": 30 }
+  ],
+  "rotina": {
+    "titulo": "Exercícios progressivos",
+    "duracao_total_minutos": 20,
+    "ordem": ["Aquecimento", "Alternância contínua", "Controle em semicolcheias", "Golpes duplos"]
+  },
+  "exercicios": [
+    { "pagina": 2, "titulo": "Aquecimento", "descricao": "Semínimas a 60 BPM. Alterne os pés e mantenha o mesmo volume.", "padrao": "D E D E", "compasso": "4/4", "objetivo": "Aquecimento", "dificuldade": 1, "bpm_recomendado": 60, "bpm_faixa": null, "duracao_minutos": 4, "depende_de_partitura": false, "repete_exercicio": null, "trecho_original": "Aquecimento" },
+    { "pagina": 2, "titulo": "Alternância contínua", "descricao": "Colcheias a 60–80 BPM. Toque dois golpes por pulso, sem acelerar.", "padrao": "D E D E | D E D E", "compasso": "4/4", "objetivo": "Alternância contínua", "dificuldade": 1, "bpm_recomendado": null, "bpm_faixa": [60, 80], "duracao_minutos": 5, "depende_de_partitura": false, "repete_exercicio": null, "trecho_original": "Alternância contínua" },
+    { "pagina": 2, "titulo": "Controle em semicolcheias", "descricao": "Semicolcheias a 50–70 BPM. Cada grupo de quatro golpes ocupa um pulso.", "padrao": "D E D E | D E D E", "compasso": "4/4", "objetivo": "Controle em semicolcheias", "dificuldade": 1, "bpm_recomendado": null, "bpm_faixa": [50, 70], "duracao_minutos": 5, "depende_de_partitura": false, "repete_exercicio": null, "trecho_original": "Controle em semicolcheias" },
+    { "pagina": 2, "titulo": "Golpes duplos", "descricao": "Colcheias a 50–70 BPM. Mantenha os dois golpes de cada pé equilibrados.", "padrao": "D D E E | D D E E", "compasso": "4/4", "objetivo": "Golpes duplos", "dificuldade": 1, "bpm_recomendado": null, "bpm_faixa": [50, 70], "duracao_minutos": 4, "depende_de_partitura": false, "repete_exercicio": null, "trecho_original": "Golpes duplos" },
+    { "pagina": 3, "titulo": "Semínimas alternadas", "descricao": "Notação simplificada de bumbo • compasso 4/4 • exercícios de um compasso", "padrao": null, "compasso": "4/4", "objetivo": "Leitura rítmica", "dificuldade": 1, "bpm_recomendado": 60, "bpm_faixa": null, "duracao_minutos": null, "depende_de_partitura": true, "repete_exercicio": "Aquecimento", "trecho_original": "Semínimas alternadas" },
+    { "pagina": 3, "titulo": "Colcheias alternadas", "descricao": "Notação simplificada de bumbo • compasso 4/4 • exercícios de um compasso", "padrao": null, "compasso": "4/4", "objetivo": "Leitura rítmica", "dificuldade": 1, "bpm_recomendado": null, "bpm_faixa": [60, 80], "duracao_minutos": null, "depende_de_partitura": true, "repete_exercicio": "Alternância contínua", "trecho_original": "Colcheias alternadas" },
+    { "pagina": 3, "titulo": "Semicolcheias alternadas", "descricao": "Notação simplificada de bumbo • compasso 4/4 • exercícios de um compasso", "padrao": null, "compasso": "4/4", "objetivo": "Leitura rítmica", "dificuldade": 1, "bpm_recomendado": null, "bpm_faixa": [50, 70], "duracao_minutos": null, "depende_de_partitura": true, "repete_exercicio": "Controle em semicolcheias", "trecho_original": "Semicolcheias alternadas" },
+    { "pagina": 3, "titulo": "Colcheias com golpes duplos", "descricao": "Notação simplificada de bumbo • compasso 4/4 • exercícios de um compasso", "padrao": null, "compasso": "4/4", "objetivo": "Leitura rítmica", "dificuldade": 1, "bpm_recomendado": null, "bpm_faixa": [50, 70], "duracao_minutos": null, "depende_de_partitura": true, "repete_exercicio": "Golpes duplos", "trecho_original": "Colcheias com golpes duplos" }
+  ],
+  "avisos": []
+}
